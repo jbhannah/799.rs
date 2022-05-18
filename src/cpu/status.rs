@@ -7,7 +7,7 @@ pub enum Status {
     InterruptDisable,
     Decimal,
     Break,
-    Empty,
+    Break2,
     Overflow,
     Negative,
 }
