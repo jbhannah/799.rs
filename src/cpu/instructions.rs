@@ -59,14 +59,14 @@ pub enum Instruction {
 }
 
 pub trait Instructions {
-    fn adc(&mut self, operand: u16);
+    fn adc(&mut self, addr: u16);
     fn clc(&mut self);
     fn cld(&mut self);
     fn cli(&mut self);
     fn clv(&mut self);
     fn inx(&mut self);
-    fn lda(&mut self, operand: u16);
-    fn sbc(&mut self, operand: u16);
+    fn lda(&mut self, addr: u16);
+    fn sbc(&mut self, addr: u16);
     fn sec(&mut self);
     fn sed(&mut self);
     fn sei(&mut self);

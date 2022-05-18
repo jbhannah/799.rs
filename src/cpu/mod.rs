@@ -63,10 +63,11 @@ impl CPU {
             let opcode = opcodes
                 .get(&code)
                 .expect(&format!("Opcode {:x} is not recognized", code));
-            let operand = self.get_operand_address(&opcode.mode);
+
+            let addr = self.get_operand_address(&opcode.mode);
 
             match opcode.instruction {
-                Instruction::ADC => self.adc(operand.expect("Required operand is missing")),
+                Instruction::ADC => self.adc(addr.expect("Required operand is missing")),
                 Instruction::AND => todo!(),
                 Instruction::ASL => todo!(),
                 Instruction::BCC => todo!(),
@@ -95,7 +96,7 @@ impl CPU {
                 Instruction::INY => todo!(),
                 Instruction::JMP => todo!(),
                 Instruction::JSR => todo!(),
-                Instruction::LDA => self.lda(operand.expect("Required operand is missing")),
+                Instruction::LDA => self.lda(addr.expect("Required operand is missing")),
                 Instruction::LDX => todo!(),
                 Instruction::LDY => todo!(),
                 Instruction::LSR => todo!(),
@@ -109,7 +110,7 @@ impl CPU {
                 Instruction::ROR => todo!(),
                 Instruction::RTI => todo!(),
                 Instruction::RTS => todo!(),
-                Instruction::SBC => self.sbc(operand.expect("Required operand is missing")),
+                Instruction::SBC => self.sbc(addr.expect("Required operand is missing")),
                 Instruction::SEC => self.sec(),
                 Instruction::SED => self.sed(),
                 Instruction::SEI => self.sei(),
@@ -211,8 +212,8 @@ impl CPU {
 }
 
 impl Instructions for CPU {
-    fn adc(&mut self, operand: u16) {
-        self.add_to_accumulator(self.memory.read(operand));
+    fn adc(&mut self, addr: u16) {
+        self.add_to_accumulator(self.memory.read(addr));
     }
 
     fn clc(&mut self) {
@@ -238,13 +239,13 @@ impl Instructions for CPU {
         self.status.set_zero(self.index_x);
     }
 
-    fn lda(&mut self, operand: u16) {
-        self.set_accumulator(self.memory.read(operand));
+    fn lda(&mut self, addr: u16) {
+        self.set_accumulator(self.memory.read(addr));
     }
 
-    fn sbc(&mut self, operand: u16) {
+    fn sbc(&mut self, addr: u16) {
         self.add_to_accumulator(
-            (self.memory.read::<u8>(operand) as i8)
+            (self.memory.read::<u8>(addr) as i8)
                 .wrapping_neg()
                 .wrapping_sub(1) as u8,
         );
