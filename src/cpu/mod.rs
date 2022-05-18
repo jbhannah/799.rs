@@ -1,7 +1,7 @@
 use self::{
     addressing::AddressingMode,
     memory::{Memory, MemoryValue, PROGRAM_COUNTER},
-    opcodes::Instruction,
+    opcodes::{Instruction, Instructions},
     status::Status,
 };
 
@@ -84,7 +84,7 @@ impl CPU {
                 Instruction::DEY => todo!(),
                 Instruction::EOR => todo!(),
                 Instruction::INC => todo!(),
-                Instruction::INX => todo!(),
+                Instruction::INX => self.inx(),
                 Instruction::INY => todo!(),
                 Instruction::JMP => todo!(),
                 Instruction::JSR => todo!(),
@@ -109,7 +109,7 @@ impl CPU {
                 Instruction::STA => todo!(),
                 Instruction::STX => todo!(),
                 Instruction::STY => todo!(),
-                Instruction::TAX => todo!(),
+                Instruction::TAX => self.tax(),
                 Instruction::TAY => todo!(),
                 Instruction::TSX => todo!(),
                 Instruction::TXA => todo!(),
@@ -162,5 +162,21 @@ impl CPU {
 
     fn read_program_counter<T: MemoryValue>(&self) -> T {
         self.memory.read(self.program_counter)
+    }
+}
+
+impl Instructions for CPU {
+    fn inx(&mut self) {
+        self.index_x = self.index_x.wrapping_add(1);
+
+        self.status.set_negative(self.index_x);
+        self.status.set_zero(self.index_x);
+    }
+
+    fn tax(&mut self) {
+        self.index_x = self.accumulator;
+
+        self.status.set_negative(self.index_x);
+        self.status.set_zero(self.index_x);
     }
 }

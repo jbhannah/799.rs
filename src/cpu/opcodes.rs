@@ -63,6 +63,11 @@ pub enum Instruction {
     TYA, // Transfer Y to Accumulator
 }
 
+pub trait Instructions {
+    fn inx(&mut self);
+    fn tax(&mut self);
+}
+
 #[derive(Debug)]
 pub struct OpCode {
     pub code: u8,
