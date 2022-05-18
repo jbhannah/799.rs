@@ -1,11 +1,13 @@
 use self::{
     addressing::AddressingMode,
     memory::{Memory, MemoryValue, PROGRAM_COUNTER},
+    opcodes::Instruction,
     status::Status,
 };
 
 mod addressing;
 mod memory;
+mod opcodes;
 mod status;
 
 #[derive(Debug, Default)]
@@ -45,15 +47,73 @@ impl CPU {
     }
 
     pub fn run(&mut self) {
+        let ref opcodes = *opcodes::OPCODES_MAP;
+
         loop {
-            let opcode: u8 = self.memory.read(self.program_counter);
+            let code: u8 = self.memory.read(self.program_counter);
             self.program_counter += 1;
 
-            match opcode {
-                0x00 => {
-                    return;
-                }
-                _ => todo!(),
+            let opcode = opcodes
+                .get(&code)
+                .expect(&format!("Opcode {:x} is not recognized", code));
+
+            match opcode.instruction {
+                Instruction::ADC => todo!(),
+                Instruction::AND => todo!(),
+                Instruction::ASL => todo!(),
+                Instruction::BCC => todo!(),
+                Instruction::BCS => todo!(),
+                Instruction::BEQ => todo!(),
+                Instruction::BIT => todo!(),
+                Instruction::BMI => todo!(),
+                Instruction::BNE => todo!(),
+                Instruction::BPL => todo!(),
+                Instruction::BRK => return,
+                Instruction::BVC => todo!(),
+                Instruction::BVS => todo!(),
+                Instruction::CLC => todo!(),
+                Instruction::CLD => todo!(),
+                Instruction::CLI => todo!(),
+                Instruction::CLV => todo!(),
+                Instruction::CMP => todo!(),
+                Instruction::CPX => todo!(),
+                Instruction::CPY => todo!(),
+                Instruction::DEC => todo!(),
+                Instruction::DEX => todo!(),
+                Instruction::DEY => todo!(),
+                Instruction::EOR => todo!(),
+                Instruction::INC => todo!(),
+                Instruction::INX => todo!(),
+                Instruction::INY => todo!(),
+                Instruction::JMP => todo!(),
+                Instruction::JSR => todo!(),
+                Instruction::LDA => todo!(),
+                Instruction::LDX => todo!(),
+                Instruction::LDY => todo!(),
+                Instruction::LSR => todo!(),
+                Instruction::NOP => todo!(),
+                Instruction::ORA => todo!(),
+                Instruction::PHA => todo!(),
+                Instruction::PHP => todo!(),
+                Instruction::PLA => todo!(),
+                Instruction::PLP => todo!(),
+                Instruction::ROL => todo!(),
+                Instruction::ROR => todo!(),
+                Instruction::RTI => todo!(),
+                Instruction::RTS => todo!(),
+                Instruction::SBC => todo!(),
+                Instruction::SEC => todo!(),
+                Instruction::SED => todo!(),
+                Instruction::SEI => todo!(),
+                Instruction::STA => todo!(),
+                Instruction::STX => todo!(),
+                Instruction::STY => todo!(),
+                Instruction::TAX => todo!(),
+                Instruction::TAY => todo!(),
+                Instruction::TSX => todo!(),
+                Instruction::TXA => todo!(),
+                Instruction::TXS => todo!(),
+                Instruction::TYA => todo!(),
             }
         }
     }
