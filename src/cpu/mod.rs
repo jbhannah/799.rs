@@ -50,8 +50,7 @@ impl CPU {
         let ref opcodes = *opcodes::OPCODES_MAP;
 
         loop {
-            let code: u8 = self.memory.read(self.program_counter);
-            self.program_counter += 1;
+            let code: u8 = self.read_program_counter();
 
             let opcode = opcodes
                 .get(&code)
@@ -88,7 +87,7 @@ impl CPU {
                 Instruction::INY => todo!(),
                 Instruction::JMP => todo!(),
                 Instruction::JSR => todo!(),
-                Instruction::LDA => todo!(),
+                Instruction::LDA => self.lda(operand.expect("Required operand is missing")),
                 Instruction::LDX => todo!(),
                 Instruction::LDY => todo!(),
                 Instruction::LSR => todo!(),
@@ -119,9 +118,16 @@ impl CPU {
         }
     }
 
-    fn get_operand_address(&self, mode: &AddressingMode) -> Option<u16> {
+    fn get_operand_address(&mut self, mode: &AddressingMode) -> Option<u16> {
         match mode {
-            AddressingMode::Immediate => Some(self.program_counter),
+            /* Return the program counter, and increment it manually since we'll
+             * be reading it directly.
+             */
+            AddressingMode::Immediate => {
+                let pc = Some(self.program_counter);
+                self.program_counter += 1;
+                pc
+            }
 
             AddressingMode::ZeroPage => Some(self.read_program_counter::<u8>() as u16),
             AddressingMode::ZeroPageX => {
@@ -160,8 +166,14 @@ impl CPU {
         (hi as u16) << 8 | (lo as u16)
     }
 
-    fn read_program_counter<T: MemoryValue>(&self) -> T {
-        self.memory.read(self.program_counter)
+    /**
+     * Read the value at the address of the program counter, and increment the
+     * counter by the number of bytes in the returned value.
+     */
+    fn read_program_counter<T: MemoryValue>(&mut self) -> T {
+        let val: T = self.memory.read(self.program_counter);
+        self.program_counter += T::BITS / 8;
+        val
     }
 }
 
@@ -173,10 +185,77 @@ impl Instructions for CPU {
         self.status.set_zero(self.index_x);
     }
 
+    fn lda(&mut self, operand: u16) {
+        self.accumulator = self.memory.read(operand);
+
+        self.status.set_negative(self.accumulator);
+        self.status.set_zero(self.accumulator);
+    }
+
     fn tax(&mut self) {
         self.index_x = self.accumulator;
 
         self.status.set_negative(self.index_x);
         self.status.set_zero(self.index_x);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_0xa5_lda_zero_page() {
+        let mut cpu = CPU::new();
+        cpu.memory.write(0x10, 0x55 as u8);
+        cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
+
+        assert_eq!(cpu.accumulator, 0x55);
+    }
+
+    #[test]
+    fn test_0xa9_lda_immediate() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
+
+        assert_eq!(cpu.accumulator, 0x05);
+        assert!(!cpu.status.contains(Status::Negative));
+        assert!(!cpu.status.contains(Status::Zero));
+    }
+
+    #[test]
+    fn test_0xa9_lda_negative_flag() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x80, 0x00]);
+
+        assert_eq!(cpu.accumulator, 0x80);
+        assert!(cpu.status.contains(Status::Negative));
+        assert!(!cpu.status.contains(Status::Zero));
+    }
+
+    #[test]
+    fn test_0xa9_lda_zero_flag() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
+
+        assert_eq!(cpu.accumulator, 0x00);
+        assert!(!cpu.status.contains(Status::Negative));
+        assert!(cpu.status.contains(Status::Zero))
+    }
+
+    #[test]
+    fn test_0xaa_tax() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x0a, 0xaa, 0x00]);
+
+        assert_eq!(cpu.index_x, 0x0a)
+    }
+
+    #[test]
+    fn test_0xe8_inx_overflow() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00]);
+
+        assert_eq!(cpu.index_x, 1);
     }
 }

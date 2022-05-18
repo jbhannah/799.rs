@@ -3,11 +3,14 @@ pub const PROGRAM_COUNTER: u16 = 0xFFFC;
 pub const MEMORY_SIZE: usize = 0xFFFF;
 
 pub trait MemoryValue {
+    const BITS: u16;
     fn read_from_memory(memory: &Memory, addr: usize) -> Self;
     fn write_to_memory(memory: &mut Memory, addr: usize, val: Self);
 }
 
 impl MemoryValue for u8 {
+    const BITS: u16 = u8::BITS as u16;
+
     fn read_from_memory(memory: &Memory, addr: usize) -> Self {
         memory.0[addr]
     }
@@ -18,6 +21,8 @@ impl MemoryValue for u8 {
 }
 
 impl MemoryValue for u16 {
+    const BITS: u16 = u16::BITS as u16;
+
     fn read_from_memory(memory: &Memory, addr: usize) -> Self {
         u16::from_le_bytes(
             memory.0[addr..addr + 2]
