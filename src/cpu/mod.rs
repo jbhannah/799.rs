@@ -1,7 +1,7 @@
 use self::{
     addressing::AddressingMode,
     instructions::{Instruction, Instructions},
-    memory::{Memory, MemoryValue, PROGRAM_COUNTER},
+    memory::{Memory, MemoryValue, RESET},
     status::Status,
 };
 
@@ -11,13 +11,22 @@ mod memory;
 mod opcodes;
 mod status;
 
+#[derive(Debug)]
+pub struct StackPointer(u8);
+
+impl Default for StackPointer {
+    fn default() -> Self {
+        Self(0xFD)
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct CPU {
     pub accumulator: u8,
     pub index_x: u8,
     pub index_y: u8,
     pub program_counter: u16,
-    pub stack_pointer: u8,
+    pub stack_pointer: StackPointer,
     pub status: Status,
     memory: Memory,
 }
@@ -38,13 +47,11 @@ impl CPU {
     }
 
     pub fn reset(&mut self) {
-        self.accumulator = Default::default();
-        self.index_x = Default::default();
-        self.index_y = Default::default();
-        self.stack_pointer = Default::default();
-        self.status = Default::default();
-
-        self.program_counter = self.memory.read(PROGRAM_COUNTER);
+        *self = Self {
+            program_counter: self.memory.read(RESET),
+            memory: self.memory,
+            ..Default::default()
+        }
     }
 
     pub fn run(&mut self) {

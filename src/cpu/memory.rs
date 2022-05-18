@@ -1,6 +1,7 @@
 pub const PROGRAM_ROM: usize = 0x8000;
-pub const PROGRAM_COUNTER: u16 = 0xFFFC;
 pub const MEMORY_SIZE: usize = 0xFFFF;
+
+pub const RESET: u16 = 0xFFFC;
 
 pub trait MemoryValue {
     const BITS: u16;
@@ -39,7 +40,7 @@ impl MemoryValue for u16 {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Memory([u8; MEMORY_SIZE]);
 
 impl Default for Memory {
@@ -51,7 +52,7 @@ impl Default for Memory {
 impl Memory {
     pub fn load(&mut self, program: Vec<u8>) {
         self.0[PROGRAM_ROM..(PROGRAM_ROM + program.len())].copy_from_slice(&program[..]);
-        self.write(PROGRAM_COUNTER, PROGRAM_ROM as u16);
+        self.write(RESET, PROGRAM_ROM as u16);
     }
 
     pub fn read<T: MemoryValue>(&self, addr: u16) -> T {

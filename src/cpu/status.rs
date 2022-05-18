@@ -14,7 +14,7 @@ pub enum Status {
 
 impl Default for Status {
     fn default() -> Self {
-        Status::none()
+        Status::InterruptDisable | Status::Break | Status::Break2
     }
 }
 
@@ -42,56 +42,56 @@ mod test {
 
     #[test]
     fn test_set_negative_off_off() {
-        let mut status = Status::none();
+        let mut status = Status::default();
         status.set_negative(0b0000_0001);
         assert!(!status.contains(Status::Negative));
     }
 
     #[test]
     fn test_set_negative_off_on() {
-        let mut status = Status::none();
+        let mut status = Status::default();
         status.set_negative(0b1000_0000);
         assert!(status.contains(Status::Negative));
     }
 
     #[test]
     fn test_set_negative_on_off() {
-        let mut status = Status::Negative;
+        let mut status = Status::default() | Status::Negative;
         status.set_negative(0b0000_0001);
         assert!(!status.contains(Status::Negative));
     }
 
     #[test]
     fn test_set_negative_on_on() {
-        let mut status = Status::Negative;
+        let mut status = Status::default() | Status::Negative;
         status.set_negative(0b1000_0000);
         assert!(status.contains(Status::Negative));
     }
 
     #[test]
     fn test_set_zero_off_off() {
-        let mut status = Status::none();
+        let mut status = Status::default();
         status.set_zero(1);
         assert!(!status.contains(Status::Zero));
     }
 
     #[test]
     fn test_set_zero_off_on() {
-        let mut status = Status::none();
+        let mut status = Status::default();
         status.set_zero(0);
         assert!(status.contains(Status::Zero));
     }
 
     #[test]
     fn test_set_zero_on_off() {
-        let mut status = Status::Zero;
+        let mut status = Status::default() | Status::Zero;
         status.set_zero(1);
         assert!(!status.contains(Status::Zero));
     }
 
     #[test]
     fn test_set_zero_on_on() {
-        let mut status = Status::Zero;
+        let mut status = Status::default() | Status::Zero;
         status.set_zero(0);
         assert!(status.contains(Status::Zero));
     }
