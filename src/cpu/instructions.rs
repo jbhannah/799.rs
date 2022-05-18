@@ -59,7 +59,9 @@ pub enum Instruction {
 }
 
 pub trait Instructions {
+    fn adc(&mut self, operand: u16);
     fn inx(&mut self);
     fn lda(&mut self, operand: u16);
+    fn sbc(&mut self, operand: u16);
     fn tax(&mut self);
 }

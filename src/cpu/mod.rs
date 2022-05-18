@@ -66,7 +66,7 @@ impl CPU {
             let operand = self.get_operand_address(&opcode.mode);
 
             match opcode.instruction {
-                Instruction::ADC => todo!(),
+                Instruction::ADC => self.adc(operand.expect("Required operand is missing")),
                 Instruction::AND => todo!(),
                 Instruction::ASL => todo!(),
                 Instruction::BCC => todo!(),
@@ -109,7 +109,7 @@ impl CPU {
                 Instruction::ROR => todo!(),
                 Instruction::RTI => todo!(),
                 Instruction::RTS => todo!(),
-                Instruction::SBC => todo!(),
+                Instruction::SBC => self.sbc(operand.expect("Required operand is missing")),
                 Instruction::SEC => todo!(),
                 Instruction::SED => todo!(),
                 Instruction::SEI => todo!(),
@@ -124,6 +124,24 @@ impl CPU {
                 Instruction::TYA => todo!(),
             }
         }
+    }
+
+    fn add_to_accumulator(&mut self, value: u8) {
+        let sum = self.accumulator as u16
+            + value as u16
+            + (if self.status.contains(Status::Carry) {
+                1
+            } else {
+                0
+            }) as u16;
+
+        self.status.set_carry(sum);
+
+        let result = sum as u8;
+        self.status
+            .set_overflow((value ^ result) & (result ^ self.accumulator) & 0x80 != 0);
+
+        self.set_accumulator(result);
     }
 
     fn get_operand_address(&mut self, mode: &AddressingMode) -> Option<u16> {
@@ -183,9 +201,20 @@ impl CPU {
         self.program_counter += T::BITS / 8;
         val
     }
+
+    fn set_accumulator(&mut self, value: u8) {
+        self.accumulator = value;
+
+        self.status.set_negative(self.accumulator);
+        self.status.set_zero(self.accumulator);
+    }
 }
 
 impl Instructions for CPU {
+    fn adc(&mut self, operand: u16) {
+        self.add_to_accumulator(self.memory.read(operand));
+    }
+
     fn inx(&mut self) {
         self.index_x = self.index_x.wrapping_add(1);
 
@@ -194,10 +223,15 @@ impl Instructions for CPU {
     }
 
     fn lda(&mut self, operand: u16) {
-        self.accumulator = self.memory.read(operand);
+        self.set_accumulator(self.memory.read(operand));
+    }
 
-        self.status.set_negative(self.accumulator);
-        self.status.set_zero(self.accumulator);
+    fn sbc(&mut self, operand: u16) {
+        self.add_to_accumulator(
+            (self.memory.read::<u8>(operand) as i8)
+                .wrapping_neg()
+                .wrapping_sub(1) as u8,
+        );
     }
 
     fn tax(&mut self) {
