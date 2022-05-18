@@ -79,10 +79,10 @@ impl CPU {
                 Instruction::BRK => return,
                 Instruction::BVC => todo!(),
                 Instruction::BVS => todo!(),
-                Instruction::CLC => todo!(),
-                Instruction::CLD => todo!(),
-                Instruction::CLI => todo!(),
-                Instruction::CLV => todo!(),
+                Instruction::CLC => self.clc(),
+                Instruction::CLD => self.cld(),
+                Instruction::CLI => self.cli(),
+                Instruction::CLV => self.clv(),
                 Instruction::CMP => todo!(),
                 Instruction::CPX => todo!(),
                 Instruction::CPY => todo!(),
@@ -110,9 +110,9 @@ impl CPU {
                 Instruction::RTI => todo!(),
                 Instruction::RTS => todo!(),
                 Instruction::SBC => self.sbc(operand.expect("Required operand is missing")),
-                Instruction::SEC => todo!(),
-                Instruction::SED => todo!(),
-                Instruction::SEI => todo!(),
+                Instruction::SEC => self.sec(),
+                Instruction::SED => self.sed(),
+                Instruction::SEI => self.sei(),
                 Instruction::STA => todo!(),
                 Instruction::STX => todo!(),
                 Instruction::STY => todo!(),
@@ -215,6 +215,22 @@ impl Instructions for CPU {
         self.add_to_accumulator(self.memory.read(operand));
     }
 
+    fn clc(&mut self) {
+        self.status.set(Status::Carry, false);
+    }
+
+    fn cld(&mut self) {
+        self.status.set(Status::Decimal, false);
+    }
+
+    fn cli(&mut self) {
+        self.status.set(Status::InterruptDisable, false);
+    }
+
+    fn clv(&mut self) {
+        self.status.set(Status::Overflow, false);
+    }
+
     fn inx(&mut self) {
         self.index_x = self.index_x.wrapping_add(1);
 
@@ -232,6 +248,18 @@ impl Instructions for CPU {
                 .wrapping_neg()
                 .wrapping_sub(1) as u8,
         );
+    }
+
+    fn sec(&mut self) {
+        self.status.set(Status::Carry, true);
+    }
+
+    fn sed(&mut self) {
+        self.status.set(Status::Decimal, true);
+    }
+
+    fn sei(&mut self) {
+        self.status.set(Status::InterruptDisable, true);
     }
 
     fn tax(&mut self) {
@@ -299,5 +327,68 @@ mod test {
         cpu.load_and_run(vec![0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00]);
 
         assert_eq!(cpu.index_x, 1);
+    }
+
+    #[test]
+    fn test_0x18_clc() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status | Status::Carry;
+        cpu.load_and_run(vec![0x18, 0x00]);
+
+        assert!(!cpu.status.contains(Status::Carry));
+    }
+
+    #[test]
+    fn test_0xd8_cld() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status | Status::Decimal;
+        cpu.load_and_run(vec![0xd8, 0x00]);
+
+        assert!(!cpu.status.contains(Status::Decimal));
+    }
+
+    #[test]
+    fn test_0x58_cli() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status | Status::InterruptDisable;
+        cpu.load_and_run(vec![0x58, 0x00]);
+
+        assert!(!cpu.status.contains(Status::InterruptDisable));
+    }
+
+    #[test]
+    fn test_0xb8_clv() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status | Status::Overflow;
+        cpu.load_and_run(vec![0xb8, 0x00]);
+
+        assert!(!cpu.status.contains(Status::Overflow));
+    }
+
+    #[test]
+    fn test_0x38_sec() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status & Status::Carry.not();
+        cpu.load_and_run(vec![0x38, 0x00]);
+
+        assert!(cpu.status.contains(Status::Carry));
+    }
+
+    #[test]
+    fn test_0xf8_sed() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status & Status::Decimal.not();
+        cpu.load_and_run(vec![0xf8, 0x00]);
+
+        assert!(cpu.status.contains(Status::Decimal));
+    }
+
+    #[test]
+    fn test_0x78_sei() {
+        let mut cpu = CPU::new();
+        cpu.status = cpu.status & Status::InterruptDisable.not();
+        cpu.load_and_run(vec![0x78, 0x00]);
+
+        assert!(cpu.status.contains(Status::InterruptDisable));
     }
 }

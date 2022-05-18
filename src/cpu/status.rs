@@ -19,36 +19,28 @@ impl Default for Status {
 }
 
 impl Status {
-    pub fn set_carry(&mut self, result: u16) {
-        *self = if result > 0xff {
-            self.or(Status::Carry)
+    pub fn set(&mut self, flag: Self, value: bool) {
+        *self = if value {
+            self.or(flag)
         } else {
-            self.and(Status::Carry.not())
-        }
+            self.and(flag.not())
+        };
+    }
+
+    pub fn set_carry(&mut self, result: u16) {
+        self.set(Status::Carry, result > 0xff);
     }
 
     pub fn set_negative(&mut self, result: u8) {
-        *self = if result & 0b1000_0000 != 0 {
-            self.or(Status::Negative)
-        } else {
-            self.and(Status::Negative.not())
-        }
+        self.set(Status::Negative, result & 0x80 != 0);
     }
 
     pub fn set_overflow(&mut self, result: bool) {
-        *self = if result {
-            self.or(Status::Overflow)
-        } else {
-            self.and(Status::Overflow.not())
-        }
+        self.set(Status::Overflow, result);
     }
 
     pub fn set_zero(&mut self, result: u8) {
-        *self = if result == 0 {
-            self.or(Status::Zero)
-        } else {
-            self.and(Status::Zero.not())
-        }
+        self.set(Status::Zero, result == 0);
     }
 }
 

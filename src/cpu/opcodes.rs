@@ -37,6 +37,11 @@ lazy_static! {
 
         OpCode::new(0x00, Instruction::BRK, 1, 7, AddressingMode::NoneAddressing),
 
+        OpCode::new(0x18, Instruction::CLC, 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0xd8, Instruction::CLD, 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x58, Instruction::CLI, 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0xb8, Instruction::CLV, 1, 2, AddressingMode::NoneAddressing),
+
         OpCode::new(0xe8, Instruction::INX, 1, 2, AddressingMode::NoneAddressing),
 
         OpCode::new(0xa9, Instruction::LDA, 2, 2, AddressingMode::Immediate),
@@ -56,6 +61,10 @@ lazy_static! {
         OpCode::new(0xf9, Instruction::SBC, 3, 4 /* +1 if page crossed */, AddressingMode::AbsoluteY),
         OpCode::new(0xe1, Instruction::SBC, 2, 6, AddressingMode::IndirectX),
         OpCode::new(0xf1, Instruction::SBC, 2, 5 /* +1 if page crossed */, AddressingMode::IndirectY),
+
+        OpCode::new(0x38, Instruction::SEC, 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0xf8, Instruction::SED, 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x78, Instruction::SEI, 1, 2, AddressingMode::NoneAddressing),
 
         OpCode::new(0xaa, Instruction::TAX, 1, 2, AddressingMode::NoneAddressing),
     ];
