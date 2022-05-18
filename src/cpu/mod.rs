@@ -56,6 +56,7 @@ impl CPU {
             let opcode = opcodes
                 .get(&code)
                 .expect(&format!("Opcode {:x} is not recognized", code));
+            let operand = self.get_operand_address(&opcode.mode);
 
             match opcode.instruction {
                 Instruction::ADC => todo!(),
@@ -118,36 +119,38 @@ impl CPU {
         }
     }
 
-    fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
+    fn get_operand_address(&self, mode: &AddressingMode) -> Option<u16> {
         match mode {
-            AddressingMode::Immediate => self.program_counter,
+            AddressingMode::Immediate => Some(self.program_counter),
 
-            AddressingMode::ZeroPage => self.read_program_counter::<u8>() as u16,
+            AddressingMode::ZeroPage => Some(self.read_program_counter::<u8>() as u16),
             AddressingMode::ZeroPageX => {
-                self.read_program_counter::<u8>().wrapping_add(self.index_x) as u16
+                Some(self.read_program_counter::<u8>().wrapping_add(self.index_x) as u16)
             }
             AddressingMode::ZeroPageY => {
-                self.read_program_counter::<u8>().wrapping_add(self.index_y) as u16
+                Some(self.read_program_counter::<u8>().wrapping_add(self.index_y) as u16)
             }
 
-            AddressingMode::Absolute => self.read_program_counter::<u16>(),
-            AddressingMode::AbsoluteX => self
-                .read_program_counter::<u16>()
-                .wrapping_add(self.index_x as u16),
-            AddressingMode::AbsoluteY => self
-                .read_program_counter::<u16>()
-                .wrapping_add(self.index_y as u16),
+            AddressingMode::Absolute => Some(self.read_program_counter::<u16>()),
+            AddressingMode::AbsoluteX => Some(
+                self.read_program_counter::<u16>()
+                    .wrapping_add(self.index_x as u16),
+            ),
+            AddressingMode::AbsoluteY => Some(
+                self.read_program_counter::<u16>()
+                    .wrapping_add(self.index_y as u16),
+            ),
 
             AddressingMode::IndirectX => {
                 let ptr = self.read_program_counter::<u8>().wrapping_add(self.index_x);
-                self.read_indirect(ptr)
+                Some(self.read_indirect(ptr))
             }
             AddressingMode::IndirectY => {
                 let ptr: u8 = self.read_program_counter();
-                self.read_indirect(ptr).wrapping_add(self.index_y as u16)
+                Some(self.read_indirect(ptr).wrapping_add(self.index_y as u16))
             }
 
-            AddressingMode::NoneAddressing => panic!("mode {:?} is not supported", mode),
+            AddressingMode::NoneAddressing => None,
         }
     }
 
