@@ -86,7 +86,7 @@ impl CPU {
             match opcode.instruction {
                 Instruction::ADC => self.with_operand(Self::adc, addr),
                 Instruction::AND => self.with_operand(Self::and, addr),
-                Instruction::ASL => self.asl(addr),
+                Instruction::ASL => self.asl(addr), // handles None case to operate on accumulator
                 Instruction::BCC => self.with_operand(Self::bcc, addr),
                 Instruction::BCS => self.with_operand(Self::bcs, addr),
                 Instruction::BEQ => self.with_operand(Self::beq, addr),
@@ -269,9 +269,9 @@ impl CPU {
         self.stack_pointer.advance(T::BITS as i16 / 8);
     }
 
-    fn with_operand<CB>(&mut self, mut callback: CB, addr: Option<u16>)
+    fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
     where
-        CB: FnMut(&mut Self, u16),
+        CB: Fn(&mut Self, u16),
     {
         callback(self, addr.expect("Required operand is missing"))
     }
