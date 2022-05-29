@@ -118,7 +118,7 @@ impl CPU {
                 Instruction::STX => self.with_operand(Self::stx, addr),
                 Instruction::STY => self.with_operand(Self::sty, addr),
                 Instruction::TAX => self.tax(),
-                Instruction::TAY => todo!(),
+                Instruction::TAY => self.tay(),
                 Instruction::TSX => todo!(),
                 Instruction::TXA => todo!(),
                 Instruction::TXS => todo!(),
@@ -309,6 +309,13 @@ impl Instructions for CPU {
         self.status.set_negative(self.index_x);
         self.status.set_zero(self.index_x);
     }
+
+    fn tay(&mut self) {
+        self.index_y = self.accumulator;
+
+        self.status.set_negative(self.index_y);
+        self.status.set_zero(self.index_y);
+    }
 }
 
 #[cfg(test)]
@@ -351,7 +358,7 @@ mod test {
 
         assert_eq!(cpu.accumulator, 0x00);
         assert!(!cpu.status.contains(Status::Negative));
-        assert!(cpu.status.contains(Status::Zero))
+        assert!(cpu.status.contains(Status::Zero));
     }
 
     #[test]
@@ -359,7 +366,15 @@ mod test {
         let mut cpu = CPU::new();
         cpu.load_and_run(vec![0xa9, 0x0a, 0xaa, 0x00]);
 
-        assert_eq!(cpu.index_x, 0x0a)
+        assert_eq!(cpu.index_x, 0x0a);
+    }
+
+    #[test]
+    fn test_0xa8_tay() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa9, 0x0a, 0xa8, 0x00]);
+
+        assert_eq!(cpu.index_y, 0x0a);
     }
 
     #[test]
@@ -452,6 +467,19 @@ mod test {
             0xa9, 0x42, // load 0x42 into the accumulator
             0xaa, // transfer the accumulator into X register
             0x86, 0x00, // store X register into $0000
+            0x00,
+        ]);
+
+        assert_eq!(cpu.memory.read::<u8>(0x00), 0x42);
+    }
+
+    #[test]
+    fn test_0x84_sty() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![
+            0xa9, 0x42, // load 0x42 into the accumulator
+            0xa8, // transfer the accumulator into Y register
+            0x84, 0x00, // store Y register into $0000
             0x00,
         ]);
 
