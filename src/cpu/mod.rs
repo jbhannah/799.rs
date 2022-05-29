@@ -67,7 +67,7 @@ impl CPU {
             let addr = self.get_operand_address(&opcode.mode);
 
             match opcode.instruction {
-                Instruction::ADC => self.adc(addr.expect("Required operand is missing")),
+                Instruction::ADC => self.with_operand(Self::adc, addr),
                 Instruction::AND => todo!(),
                 Instruction::ASL => todo!(),
                 Instruction::BCC => todo!(),
@@ -96,7 +96,7 @@ impl CPU {
                 Instruction::INY => todo!(),
                 Instruction::JMP => todo!(),
                 Instruction::JSR => todo!(),
-                Instruction::LDA => self.lda(addr.expect("Required operand is missing")),
+                Instruction::LDA => self.with_operand(Self::lda, addr),
                 Instruction::LDX => todo!(),
                 Instruction::LDY => todo!(),
                 Instruction::LSR => todo!(),
@@ -110,7 +110,7 @@ impl CPU {
                 Instruction::ROR => todo!(),
                 Instruction::RTI => todo!(),
                 Instruction::RTS => todo!(),
-                Instruction::SBC => self.sbc(addr.expect("Required operand is missing")),
+                Instruction::SBC => self.with_operand(Self::sbc, addr),
                 Instruction::SEC => self.sec(),
                 Instruction::SED => self.sed(),
                 Instruction::SEI => self.sei(),
@@ -125,6 +125,13 @@ impl CPU {
                 Instruction::TYA => todo!(),
             }
         }
+    }
+
+    fn with_operand<CB>(&mut self, mut callback: CB, addr: Option<u16>)
+    where
+        CB: FnMut(&mut Self, u16),
+    {
+        callback(self, addr.expect("Required operand is missing"))
     }
 
     fn add_to_accumulator(&mut self, value: u8) {
