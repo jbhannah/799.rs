@@ -69,6 +69,7 @@ pub trait Instructions {
     fn bmi(&mut self, addr: u16);
     fn bne(&mut self, addr: u16);
     fn bpl(&mut self, addr: u16);
+    fn brk(&mut self);
     fn bvc(&mut self, addr: u16);
     fn bvs(&mut self, addr: u16);
     fn clc(&mut self);

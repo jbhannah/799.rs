@@ -1,7 +1,9 @@
 pub const PROGRAM_ROM: usize = 0x8000;
 pub const MEMORY_SIZE: usize = 0x10000;
 
+pub const STACK: u16 = 0x00FD;
 pub const RESET: u16 = 0xFFFC;
+pub const INTERRUPT: u16 = 0xFFFE;
 
 pub trait MemoryValue {
     const BITS: u16;

@@ -15,13 +15,25 @@ pub struct StackPointer(u8);
 
 impl Default for StackPointer {
     fn default() -> Self {
-        Self(0xFD)
+        Self(memory::STACK as u8)
     }
 }
 
 impl Into<u8> for StackPointer {
     fn into(self) -> u8 {
         self.0
+    }
+}
+
+impl Into<u16> for StackPointer {
+    fn into(self) -> u16 {
+        self.0 as u16
+    }
+}
+
+impl StackPointer {
+    pub fn advance(&mut self, offset: i16) {
+        self.0 = (self.0 as i16 + offset) as u8;
     }
 }
 
@@ -82,7 +94,7 @@ impl CPU {
                 Instruction::BMI => self.with_operand(Self::bmi, addr),
                 Instruction::BNE => self.with_operand(Self::bne, addr),
                 Instruction::BPL => self.with_operand(Self::bpl, addr),
-                Instruction::BRK => return,
+                Instruction::BRK => self.brk(),
                 Instruction::BVC => self.with_operand(Self::bvc, addr),
                 Instruction::BVS => self.with_operand(Self::bvs, addr),
                 Instruction::CLC => self.clc(),
@@ -128,6 +140,10 @@ impl CPU {
                 Instruction::TXA => self.txa(),
                 Instruction::TXS => self.txs(),
                 Instruction::TYA => self.tya(),
+            }
+
+            if self.program_counter == 0 {
+                return;
             }
         }
     }
@@ -240,6 +256,19 @@ impl CPU {
         self.status.set_zero(self.index_y);
     }
 
+    /*
+    fn stack_pop<T: MemoryValue>(&mut self) -> T {
+        let val: T = self.memory.read(self.stack_pointer.into());
+        self.stack_pointer.advance(T::BITS as i16 / -8);
+        val
+    }
+    */
+
+    fn stack_push<T: MemoryValue>(&mut self, value: T) {
+        self.memory.write(self.stack_pointer.into(), value);
+        self.stack_pointer.advance(T::BITS as i16 / 8);
+    }
+
     fn with_operand<CB>(&mut self, mut callback: CB, addr: Option<u16>)
     where
         CB: FnMut(&mut Self, u16),
@@ -305,6 +334,16 @@ impl Instructions for CPU {
 
     fn bpl(&mut self, addr: u16) {
         self.branch(addr, !self.status.contains(Status::Negative));
+    }
+
+    fn brk(&mut self) {
+        self.stack_push(self.program_counter);
+        self.stack_push(self.status.bits());
+
+        self.program_counter = self.memory.read(memory::INTERRUPT);
+
+        self.status.set(Status::Break, true);
+        self.status.set(Status::Break2, true);
     }
 
     fn bvc(&mut self, addr: u16) {
