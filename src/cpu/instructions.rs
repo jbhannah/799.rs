@@ -61,6 +61,7 @@ pub enum Instruction {
 pub trait Instructions {
     fn adc(&mut self, addr: u16);
     fn and(&mut self, addr: u16);
+    fn asl(&mut self, addr: Option<u16>);
     fn clc(&mut self);
     fn cld(&mut self);
     fn cli(&mut self);

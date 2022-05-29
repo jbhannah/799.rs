@@ -75,7 +75,7 @@ impl CPU {
             match opcode.instruction {
                 Instruction::ADC => self.with_operand(Self::adc, addr),
                 Instruction::AND => self.with_operand(Self::and, addr),
-                Instruction::ASL => todo!(),
+                Instruction::ASL => self.asl(addr),
                 Instruction::BCC => todo!(),
                 Instruction::BCS => todo!(),
                 Instruction::BEQ => todo!(),
@@ -245,6 +245,24 @@ impl Instructions for CPU {
 
     fn and(&mut self, addr: u16) {
         self.set_accumulator(self.accumulator & self.memory.read::<u8>(addr));
+    }
+
+    fn asl(&mut self, addr: Option<u16>) {
+        let value = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = value << 1;
+
+        self.status.set(Status::Carry, value >> 7 == 1);
+        self.status.set_negative(result);
+        self.status.set_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        };
     }
 
     fn clc(&mut self) {
@@ -502,5 +520,50 @@ mod test {
         ]);
 
         assert_eq!(cpu.memory.read::<u8>(0x00), 0x42);
+    }
+
+    #[test]
+    fn test_0x0a_asl() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![
+            0xa9,
+            0b0101_0101, // load 0b0101_0101 into the accumulator
+            0x0a,        // accumulator bit shift left
+            0x00,
+        ]);
+
+        assert!(!cpu.status.contains(Status::Carry));
+        assert_eq!(cpu.accumulator, 0b1010_1010);
+    }
+
+    #[test]
+    fn test_0x0a_asl_carry() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![
+            0xa9,
+            0b1010_1010, // load 0b1010_1010 into the accumulator
+            0x0a,        // accumulator bit shift left
+            0x00,
+        ]);
+
+        assert!(cpu.status.contains(Status::Carry));
+        assert_eq!(cpu.accumulator, 0b0101_0100);
+    }
+
+    #[test]
+    fn test_0x06_asl() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![
+            0xa9,
+            0b0101_0101, // load 0b0101_0101 into the accumulator
+            0x85,
+            0x00, // store the accumulator into $0000
+            0x06,
+            0x00, // $0000 bit shift left
+            0x00,
+        ]);
+
+        assert!(!cpu.status.contains(Status::Carry));
+        assert_eq!(cpu.memory.read::<u8>(0x00), 0b1010_1010);
     }
 }
