@@ -68,7 +68,7 @@ impl CPU {
 
             match opcode.instruction {
                 Instruction::ADC => self.with_operand(Self::adc, addr),
-                Instruction::AND => todo!(),
+                Instruction::AND => self.with_operand(Self::and, addr),
                 Instruction::ASL => todo!(),
                 Instruction::BCC => todo!(),
                 Instruction::BCS => todo!(),
@@ -90,7 +90,7 @@ impl CPU {
                 Instruction::DEC => todo!(),
                 Instruction::DEX => todo!(),
                 Instruction::DEY => todo!(),
-                Instruction::EOR => todo!(),
+                Instruction::EOR => self.with_operand(Self::eor, addr),
                 Instruction::INC => todo!(),
                 Instruction::INX => self.inx(),
                 Instruction::INY => todo!(),
@@ -101,7 +101,7 @@ impl CPU {
                 Instruction::LDY => todo!(),
                 Instruction::LSR => todo!(),
                 Instruction::NOP => todo!(),
-                Instruction::ORA => todo!(),
+                Instruction::ORA => self.with_operand(Self::ora, addr),
                 Instruction::PHA => todo!(),
                 Instruction::PHP => todo!(),
                 Instruction::PLA => todo!(),
@@ -223,6 +223,13 @@ impl Instructions for CPU {
         self.add_to_accumulator(self.memory.read(addr));
     }
 
+    fn and(&mut self, addr: u16) {
+        self.accumulator = self.accumulator & self.memory.read::<u8>(addr);
+
+        self.status.set_negative(self.accumulator);
+        self.status.set_zero(self.accumulator);
+    }
+
     fn clc(&mut self) {
         self.status.set(Status::Carry, false);
     }
@@ -239,6 +246,13 @@ impl Instructions for CPU {
         self.status.set(Status::Overflow, false);
     }
 
+    fn eor(&mut self, addr: u16) {
+        self.accumulator = self.accumulator ^ self.memory.read::<u8>(addr);
+
+        self.status.set_negative(self.accumulator);
+        self.status.set_zero(self.accumulator);
+    }
+
     fn inx(&mut self) {
         self.index_x = self.index_x.wrapping_add(1);
 
@@ -248,6 +262,13 @@ impl Instructions for CPU {
 
     fn lda(&mut self, addr: u16) {
         self.set_accumulator(self.memory.read(addr));
+    }
+
+    fn ora(&mut self, addr: u16) {
+        self.accumulator = self.accumulator | self.memory.read::<u8>(addr);
+
+        self.status.set_negative(self.accumulator);
+        self.status.set_zero(self.accumulator);
     }
 
     fn sbc(&mut self, addr: u16) {

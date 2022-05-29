@@ -60,12 +60,15 @@ pub enum Instruction {
 
 pub trait Instructions {
     fn adc(&mut self, addr: u16);
+    fn and(&mut self, addr: u16);
     fn clc(&mut self);
     fn cld(&mut self);
     fn cli(&mut self);
     fn clv(&mut self);
+    fn eor(&mut self, addr: u16);
     fn inx(&mut self);
     fn lda(&mut self, addr: u16);
+    fn ora(&mut self, addr: u16);
     fn sbc(&mut self, addr: u16);
     fn sec(&mut self);
     fn sed(&mut self);
