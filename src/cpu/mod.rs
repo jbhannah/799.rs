@@ -1,11 +1,10 @@
 use self::{
-    addressing::AddressingMode,
     instructions::{Instruction, Instructions},
     memory::{Memory, MemoryValue, RESET},
+    opcodes::AddressingMode,
     status::Status,
 };
 
-mod addressing;
 mod instructions;
 mod memory;
 mod opcodes;

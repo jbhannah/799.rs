@@ -1,7 +1,22 @@
 use std::collections::HashMap;
 
-use super::{addressing::AddressingMode, instructions::Instruction};
+use super::instructions::Instruction;
 use lazy_static::lazy_static;
+
+#[derive(Debug)]
+pub enum AddressingMode {
+    Immediate,
+    ZeroPage,
+    ZeroPageX,
+    ZeroPageY,
+    Absolute,
+    AbsoluteX,
+    AbsoluteY,
+    IndirectX,
+    IndirectY,
+    Relative,
+    NoneAddressing,
+}
 
 #[derive(Debug)]
 pub struct OpCode {
