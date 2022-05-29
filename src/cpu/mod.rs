@@ -20,6 +20,12 @@ impl Default for StackPointer {
     }
 }
 
+impl Into<u8> for StackPointer {
+    fn into(self) -> u8 {
+        self.0
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct CPU {
     pub accumulator: u8,
@@ -119,10 +125,10 @@ impl CPU {
                 Instruction::STY => self.with_operand(Self::sty, addr),
                 Instruction::TAX => self.tax(),
                 Instruction::TAY => self.tay(),
-                Instruction::TSX => todo!(),
-                Instruction::TXA => todo!(),
-                Instruction::TXS => todo!(),
-                Instruction::TYA => todo!(),
+                Instruction::TSX => self.tsx(),
+                Instruction::TXA => self.txa(),
+                Instruction::TXS => self.txs(),
+                Instruction::TYA => self.tya(),
             }
         }
     }
@@ -315,6 +321,25 @@ impl Instructions for CPU {
 
         self.status.set_negative(self.index_y);
         self.status.set_zero(self.index_y);
+    }
+
+    fn tsx(&mut self) {
+        self.index_x = self.stack_pointer.into();
+
+        self.status.set_negative(self.index_x);
+        self.status.set_zero(self.index_x);
+    }
+
+    fn txa(&mut self) {
+        self.set_accumulator(self.index_x);
+    }
+
+    fn txs(&mut self) {
+        self.stack_pointer = StackPointer(self.index_x);
+    }
+
+    fn tya(&mut self) {
+        self.set_accumulator(self.index_y);
     }
 }
 

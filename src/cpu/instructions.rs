@@ -78,4 +78,8 @@ pub trait Instructions {
     fn sty(&mut self, addr: u16);
     fn tax(&mut self);
     fn tay(&mut self);
+    fn tsx(&mut self);
+    fn txa(&mut self);
+    fn txs(&mut self);
+    fn tya(&mut self);
 }
