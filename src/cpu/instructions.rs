@@ -73,5 +73,8 @@ pub trait Instructions {
     fn sec(&mut self);
     fn sed(&mut self);
     fn sei(&mut self);
+    fn sta(&mut self, addr: u16);
+    fn stx(&mut self, addr: u16);
+    fn sty(&mut self, addr: u16);
     fn tax(&mut self);
 }

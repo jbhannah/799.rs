@@ -114,9 +114,9 @@ impl CPU {
                 Instruction::SEC => self.sec(),
                 Instruction::SED => self.sed(),
                 Instruction::SEI => self.sei(),
-                Instruction::STA => todo!(),
-                Instruction::STX => todo!(),
-                Instruction::STY => todo!(),
+                Instruction::STA => self.with_operand(Self::sta, addr),
+                Instruction::STX => self.with_operand(Self::stx, addr),
+                Instruction::STY => self.with_operand(Self::sty, addr),
                 Instruction::TAX => self.tax(),
                 Instruction::TAY => todo!(),
                 Instruction::TSX => todo!(),
@@ -291,6 +291,18 @@ impl Instructions for CPU {
         self.status.set(Status::InterruptDisable, true);
     }
 
+    fn sta(&mut self, addr: u16) {
+        self.memory.write(addr, self.accumulator);
+    }
+
+    fn stx(&mut self, addr: u16) {
+        self.memory.write(addr, self.index_x);
+    }
+
+    fn sty(&mut self, addr: u16) {
+        self.memory.write(addr, self.index_y);
+    }
+
     fn tax(&mut self) {
         self.index_x = self.accumulator;
 
@@ -419,5 +431,30 @@ mod test {
         cpu.load_and_run(vec![0x78, 0x00]);
 
         assert!(cpu.status.contains(Status::InterruptDisable));
+    }
+
+    #[test]
+    fn test_0x85_sta() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![
+            0xa9, 0x42, // load 0x42 into the accumulator
+            0x85, 0x00, // store the accumulator into $0000
+            0x00,
+        ]);
+
+        assert_eq!(cpu.memory.read::<u8>(0x00), 0x42)
+    }
+
+    #[test]
+    fn test_0x86_stx() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![
+            0xa9, 0x42, // load 0x42 into the accumulator
+            0xaa, // transfer the accumulator into X register
+            0x86, 0x00, // store X register into $0000
+            0x00,
+        ]);
+
+        assert_eq!(cpu.memory.read::<u8>(0x00), 0x42);
     }
 }

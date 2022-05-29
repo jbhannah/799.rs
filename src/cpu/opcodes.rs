@@ -93,6 +93,22 @@ lazy_static! {
         OpCode::new(0xf8, Instruction::SED, 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x78, Instruction::SEI, 1, 2, AddressingMode::NoneAddressing),
 
+        OpCode::new(0x85, Instruction::STA, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0x95, Instruction::STA, 2, 4, AddressingMode::ZeroPageX),
+        OpCode::new(0x8d, Instruction::STA, 3, 4, AddressingMode::Absolute),
+        OpCode::new(0x9d, Instruction::STA, 3, 5, AddressingMode::AbsoluteX),
+        OpCode::new(0x99, Instruction::STA, 3, 5, AddressingMode::AbsoluteY),
+        OpCode::new(0x81, Instruction::STA, 2, 6, AddressingMode::IndirectX),
+        OpCode::new(0x91, Instruction::STA, 2, 6, AddressingMode::IndirectY),
+
+        OpCode::new(0x86, Instruction::STX, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0x96, Instruction::STX, 2, 4, AddressingMode::ZeroPageY),
+        OpCode::new(0x8e, Instruction::STX, 3, 4, AddressingMode::Absolute),
+
+        OpCode::new(0x84, Instruction::STY, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0x94, Instruction::STY, 2, 4, AddressingMode::ZeroPageX),
+        OpCode::new(0x8c, Instruction::STY, 3, 4, AddressingMode::Absolute),
+
         OpCode::new(0xaa, Instruction::TAX, 1, 2, AddressingMode::NoneAddressing),
     ];
 
