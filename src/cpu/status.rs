@@ -32,7 +32,7 @@ impl Status {
     }
 
     pub fn set_negative(&mut self, result: u8) {
-        self.set(Status::Negative, result & 0x80 != 0);
+        self.set(Status::Negative, result & 0b1000_0000 != 0);
     }
 
     pub fn set_overflow(&mut self, result: bool) {

@@ -78,7 +78,7 @@ impl CPU {
                 Instruction::BCC => self.with_operand(Self::bcc, addr),
                 Instruction::BCS => self.with_operand(Self::bcs, addr),
                 Instruction::BEQ => self.with_operand(Self::beq, addr),
-                Instruction::BIT => todo!(),
+                Instruction::BIT => self.with_operand(Self::bit, addr),
                 Instruction::BMI => self.with_operand(Self::bmi, addr),
                 Instruction::BNE => self.with_operand(Self::bne, addr),
                 Instruction::BPL => self.with_operand(Self::bpl, addr),
@@ -285,6 +285,14 @@ impl Instructions for CPU {
 
     fn beq(&mut self, addr: u16) {
         self.branch(addr, self.status.contains(Status::Zero));
+    }
+
+    fn bit(&mut self, addr: u16) {
+        let value: u8 = self.memory.read(addr);
+
+        self.status.set_zero(self.accumulator & value);
+        self.status.set_overflow(value & 0b0100_0000 != 0);
+        self.status.set_negative(value);
     }
 
     fn bmi(&mut self, addr: u16) {

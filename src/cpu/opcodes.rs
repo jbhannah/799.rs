@@ -74,6 +74,9 @@ lazy_static! {
         OpCode::new(0x50, Instruction::BVC, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
         OpCode::new(0x70, Instruction::BVS, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
 
+        OpCode::new(0x24, Instruction::BIT, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0x2c, Instruction::BIT, 3, 4, AddressingMode::Absolute),
+
         OpCode::new(0x00, Instruction::BRK, 1, 7, AddressingMode::NoneAddressing),
 
         OpCode::new(0x18, Instruction::CLC, 1, 2, AddressingMode::NoneAddressing),
