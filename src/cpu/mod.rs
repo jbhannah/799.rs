@@ -1,6 +1,6 @@
 use self::{
     instructions::{Instruction, Instructions},
-    memory::{Memory, MemoryValue, RESET},
+    memory::{Memory, MemoryValue},
     opcodes::AddressingMode,
     status::Status,
 };
@@ -53,7 +53,7 @@ impl CPU {
 
     pub fn reset(&mut self) {
         *self = Self {
-            program_counter: self.memory.read(RESET),
+            program_counter: self.memory.read(memory::RESET),
             memory: self.memory,
             ..Default::default()
         }

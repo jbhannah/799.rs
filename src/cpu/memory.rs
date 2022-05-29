@@ -1,5 +1,5 @@
 pub const PROGRAM_ROM: usize = 0x8000;
-pub const MEMORY_SIZE: usize = 0xFFFF;
+pub const MEMORY_SIZE: usize = 0x10000;
 
 pub const RESET: u16 = 0xFFFC;
 
