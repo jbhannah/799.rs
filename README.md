@@ -1,3 +1,3 @@
 # 799.rs
 
-[![Cargo](https://github.com/jbhannah/799.rs/workflows/cargo/badge.svg)][workflow]
+[![.github/workflows/cargo.yml](https://github.com/jbhannah/799.rs/actions/workflows/cargo.yml/badge.svg)](https://github.com/jbhannah/799.rs/actions/workflows/cargo.yml)
