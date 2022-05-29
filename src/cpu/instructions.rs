@@ -62,6 +62,14 @@ pub trait Instructions {
     fn adc(&mut self, addr: u16);
     fn and(&mut self, addr: u16);
     fn asl(&mut self, addr: Option<u16>);
+    fn bcc(&mut self, addr: u16);
+    fn bcs(&mut self, addr: u16);
+    fn beq(&mut self, addr: u16);
+    fn bmi(&mut self, addr: u16);
+    fn bne(&mut self, addr: u16);
+    fn bpl(&mut self, addr: u16);
+    fn bvc(&mut self, addr: u16);
+    fn bvs(&mut self, addr: u16);
     fn clc(&mut self);
     fn cld(&mut self);
     fn cli(&mut self);

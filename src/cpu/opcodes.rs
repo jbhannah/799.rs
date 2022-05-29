@@ -50,6 +50,15 @@ lazy_static! {
         OpCode::new(0x0e, Instruction::ASL, 3, 6, AddressingMode::Absolute),
         OpCode::new(0x1e, Instruction::ASL, 3, 7, AddressingMode::AbsoluteX),
 
+        OpCode::new(0x90, Instruction::BCC, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0xb0, Instruction::BCS, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0xf0, Instruction::BEQ, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0x30, Instruction::BMI, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0xd0, Instruction::BNE, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0x10, Instruction::BPL, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0x50, Instruction::BVC, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+        OpCode::new(0x70, Instruction::BVS, 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Relative),
+
         OpCode::new(0x00, Instruction::BRK, 1, 7, AddressingMode::NoneAddressing),
 
         OpCode::new(0x18, Instruction::CLC, 1, 2, AddressingMode::NoneAddressing),

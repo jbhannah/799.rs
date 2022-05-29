@@ -76,16 +76,16 @@ impl CPU {
                 Instruction::ADC => self.with_operand(Self::adc, addr),
                 Instruction::AND => self.with_operand(Self::and, addr),
                 Instruction::ASL => self.asl(addr),
-                Instruction::BCC => todo!(),
-                Instruction::BCS => todo!(),
-                Instruction::BEQ => todo!(),
+                Instruction::BCC => self.with_operand(Self::bcc, addr),
+                Instruction::BCS => self.with_operand(Self::bcs, addr),
+                Instruction::BEQ => self.with_operand(Self::beq, addr),
                 Instruction::BIT => todo!(),
-                Instruction::BMI => todo!(),
-                Instruction::BNE => todo!(),
-                Instruction::BPL => todo!(),
+                Instruction::BMI => self.with_operand(Self::bmi, addr),
+                Instruction::BNE => self.with_operand(Self::bne, addr),
+                Instruction::BPL => self.with_operand(Self::bpl, addr),
                 Instruction::BRK => return,
-                Instruction::BVC => todo!(),
-                Instruction::BVS => todo!(),
+                Instruction::BVC => self.with_operand(Self::bvc, addr),
+                Instruction::BVS => self.with_operand(Self::bvs, addr),
                 Instruction::CLC => self.clc(),
                 Instruction::CLD => self.cld(),
                 Instruction::CLI => self.cli(),
@@ -133,13 +133,6 @@ impl CPU {
         }
     }
 
-    fn with_operand<CB>(&mut self, mut callback: CB, addr: Option<u16>)
-    where
-        CB: FnMut(&mut Self, u16),
-    {
-        callback(self, addr.expect("Required operand is missing"))
-    }
-
     fn add_to_accumulator(&mut self, value: u8) {
         let sum = self.accumulator as u16
             + value as u16
@@ -156,6 +149,12 @@ impl CPU {
             .set_overflow((value ^ result) & (result ^ self.accumulator) & 0x80 != 0);
 
         self.set_accumulator(result);
+    }
+
+    fn branch(&mut self, addr: u16, condition: bool) {
+        if condition {
+            self.program_counter = addr;
+        }
     }
 
     fn get_operand_address(&mut self, mode: &AddressingMode) -> Option<u16> {
@@ -194,6 +193,11 @@ impl CPU {
             AddressingMode::IndirectY => {
                 let ptr: u8 = self.read_program_counter();
                 Some(self.read_indirect(ptr).wrapping_add(self.index_y as u16))
+            }
+
+            AddressingMode::Relative => {
+                let offset = self.read_program_counter::<u8>() as i8;
+                Some(self.program_counter.wrapping_add(offset as u16))
             }
 
             AddressingMode::NoneAddressing => None,
@@ -236,6 +240,13 @@ impl CPU {
         self.status.set_negative(self.index_y);
         self.status.set_zero(self.index_y);
     }
+
+    fn with_operand<CB>(&mut self, mut callback: CB, addr: Option<u16>)
+    where
+        CB: FnMut(&mut Self, u16),
+    {
+        callback(self, addr.expect("Required operand is missing"))
+    }
 }
 
 impl Instructions for CPU {
@@ -263,6 +274,38 @@ impl Instructions for CPU {
             Some(addr) => self.memory.write(addr, result),
             None => self.accumulator = result,
         };
+    }
+
+    fn bcc(&mut self, addr: u16) {
+        self.branch(addr, !self.status.contains(Status::Carry));
+    }
+
+    fn bcs(&mut self, addr: u16) {
+        self.branch(addr, self.status.contains(Status::Carry));
+    }
+
+    fn beq(&mut self, addr: u16) {
+        self.branch(addr, self.status.contains(Status::Zero));
+    }
+
+    fn bmi(&mut self, addr: u16) {
+        self.branch(addr, self.status.contains(Status::Negative));
+    }
+
+    fn bne(&mut self, addr: u16) {
+        self.branch(addr, !self.status.contains(Status::Zero));
+    }
+
+    fn bpl(&mut self, addr: u16) {
+        self.branch(addr, !self.status.contains(Status::Negative));
+    }
+
+    fn bvc(&mut self, addr: u16) {
+        self.branch(addr, !self.status.contains(Status::Overflow));
+    }
+
+    fn bvs(&mut self, addr: u16) {
+        self.branch(addr, self.status.contains(Status::Overflow));
     }
 
     fn clc(&mut self) {
