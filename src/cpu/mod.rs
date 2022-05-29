@@ -11,7 +11,7 @@ mod memory;
 mod opcodes;
 mod status;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct StackPointer(u8);
 
 impl Default for StackPointer {
@@ -222,6 +222,20 @@ impl CPU {
         self.status.set_negative(self.accumulator);
         self.status.set_zero(self.accumulator);
     }
+
+    fn set_index_x(&mut self, value: u8) {
+        self.index_x = value;
+
+        self.status.set_negative(self.index_x);
+        self.status.set_zero(self.index_x);
+    }
+
+    fn set_index_y(&mut self, value: u8) {
+        self.index_y = value;
+
+        self.status.set_negative(self.index_y);
+        self.status.set_zero(self.index_y);
+    }
 }
 
 impl Instructions for CPU {
@@ -230,10 +244,7 @@ impl Instructions for CPU {
     }
 
     fn and(&mut self, addr: u16) {
-        self.accumulator = self.accumulator & self.memory.read::<u8>(addr);
-
-        self.status.set_negative(self.accumulator);
-        self.status.set_zero(self.accumulator);
+        self.set_accumulator(self.accumulator & self.memory.read::<u8>(addr));
     }
 
     fn clc(&mut self) {
@@ -253,17 +264,11 @@ impl Instructions for CPU {
     }
 
     fn eor(&mut self, addr: u16) {
-        self.accumulator = self.accumulator ^ self.memory.read::<u8>(addr);
-
-        self.status.set_negative(self.accumulator);
-        self.status.set_zero(self.accumulator);
+        self.set_accumulator(self.accumulator ^ self.memory.read::<u8>(addr));
     }
 
     fn inx(&mut self) {
-        self.index_x = self.index_x.wrapping_add(1);
-
-        self.status.set_negative(self.index_x);
-        self.status.set_zero(self.index_x);
+        self.set_index_x(self.index_x.wrapping_add(1));
     }
 
     fn lda(&mut self, addr: u16) {
@@ -271,10 +276,7 @@ impl Instructions for CPU {
     }
 
     fn ora(&mut self, addr: u16) {
-        self.accumulator = self.accumulator | self.memory.read::<u8>(addr);
-
-        self.status.set_negative(self.accumulator);
-        self.status.set_zero(self.accumulator);
+        self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
     }
 
     fn sbc(&mut self, addr: u16) {
@@ -310,24 +312,15 @@ impl Instructions for CPU {
     }
 
     fn tax(&mut self) {
-        self.index_x = self.accumulator;
-
-        self.status.set_negative(self.index_x);
-        self.status.set_zero(self.index_x);
+        self.set_index_x(self.accumulator);
     }
 
     fn tay(&mut self) {
-        self.index_y = self.accumulator;
-
-        self.status.set_negative(self.index_y);
-        self.status.set_zero(self.index_y);
+        self.set_index_y(self.accumulator);
     }
 
     fn tsx(&mut self) {
-        self.index_x = self.stack_pointer.into();
-
-        self.status.set_negative(self.index_x);
-        self.status.set_zero(self.index_x);
+        self.set_index_x(self.stack_pointer.into());
     }
 
     fn txa(&mut self) {
