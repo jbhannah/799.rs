@@ -134,8 +134,10 @@ pub trait Instructions {
     fn clv(&mut self);
     fn eor(&mut self, addr: u16);
     fn inx(&mut self);
+    fn jsr(&mut self, addr: u16);
     fn lda(&mut self, addr: u16);
     fn ora(&mut self, addr: u16);
+    fn rts(&mut self);
     fn sbc(&mut self, addr: u16);
     fn sec(&mut self);
     fn sed(&mut self);

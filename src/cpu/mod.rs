@@ -1,3 +1,5 @@
+use std::fmt::LowerHex;
+
 use self::{
     instructions::{Instruction, Instructions},
     memory::{Memory, MemoryValue},
@@ -123,7 +125,7 @@ impl CPU {
                 Instruction::INX => self.inx(),
                 Instruction::INY => todo!(),
                 Instruction::JMP => todo!(),
-                Instruction::JSR => todo!(),
+                Instruction::JSR => self.with_operand(Self::jsr, addr),
                 Instruction::LDA => self.with_operand(Self::lda, addr),
                 Instruction::LDX => todo!(),
                 Instruction::LDY => todo!(),
@@ -137,7 +139,7 @@ impl CPU {
                 Instruction::ROL => todo!(),
                 Instruction::ROR => todo!(),
                 Instruction::RTI => todo!(),
-                Instruction::RTS => todo!(),
+                Instruction::RTS => self.rts(),
                 Instruction::SBC => self.with_operand(Self::sbc, addr),
                 Instruction::SEC => self.sec(),
                 Instruction::SED => self.sed(),
@@ -241,9 +243,11 @@ impl CPU {
 
     /// Read the value at the address of the program counter, and increment the
     /// counter by the number of bytes in the returned value.
-    fn read_program_counter<T: MemoryValue>(&mut self) -> T {
+    fn read_program_counter<T: MemoryValue + LowerHex>(&mut self) -> T {
         let val: T = self.memory.read(self.program_counter);
+        println!("{:x}: {:x}", self.program_counter, val);
         self.program_counter += T::BITS / 8;
+        println!("{:x}", self.program_counter);
         val
     }
 
@@ -274,16 +278,17 @@ impl CPU {
         self.status.set_zero(value);
     }
 
-    /*
     /// Pop a value off of the stack and advance the stack pointer in reverse.
+    /// TODO: prevent pop on empty stack
+    /// TODO: reset popped addresses to 0
     fn stack_pop<T: MemoryValue>(&mut self) -> T {
         self.stack_pointer.advance(T::BITS as i16 / -8);
         let val: T = self.memory.read(self.stack_pointer.into());
         val
     }
-    */
 
     /// Push a value onto the stack and advance the stack pointer.
+    /// TODO: prevent push past limit of stack
     fn stack_push<T: MemoryValue>(&mut self, value: T) {
         self.memory.write(self.stack_pointer.into(), value);
         self.stack_pointer.advance(T::BITS as i16 / 8);
@@ -481,6 +486,13 @@ impl Instructions for CPU {
         self.set_index_x(self.index_x.wrapping_add(1));
     }
 
+    /// Push the address of the next sequential instruction onto the stack, and
+    /// set the program counter to the given address.
+    fn jsr(&mut self, addr: u16) {
+        self.stack_push(self.program_counter + 1);
+        self.program_counter = addr;
+    }
+
     /// Set the accumulator to the value at the given address.
     ///
     /// Processor status bits affected:
@@ -502,6 +514,20 @@ impl Instructions for CPU {
         self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
     }
 
+    /// Return from a subroutine by setting the program counter to the last
+    /// value on the stack.
+    fn rts(&mut self) {
+        self.program_counter = self.stack_pop();
+    }
+
+    /// Subtract the value at the given address from the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set if the result overflows past bit 7.
+    /// * Z - set if the result is 0.
+    /// * V - set if bit 7 of the result is incorrect.
+    /// * N - set to bit 7 of the result.
     fn sbc(&mut self, addr: u16) {
         self.add_to_accumulator(
             (self.memory.read::<u8>(addr) as i8)
