@@ -1,61 +1,117 @@
 #[derive(Debug)]
 pub enum Instruction {
-    ADC, // ADd with Carry
-    AND, // logical AND
-    ASL, // Arithmetic Shift Left
-    BCC, // Branch if Carry Clear
-    BCS, // Branch if Carry Set
-    BEQ, // Branch if EQual
-    BIT, // BIT test
-    BMI, // Branch if MInus
-    BNE, // Branch if Not Equal
-    BPL, // Branch if PLus
-    BRK, // BReaK (force interrupt)
-    BVC, // Branch if oVerflow Clear
-    BVS, // Branch if oVerflow Set
-    CLC, // CLear Carry flag
-    CLD, // CLear Decimal flag
-    CLI, // CLear Interrupt disable flag
-    CLV, // CLear oVerflow flag
-    CMP, // CoMPare
-    CPX, // ComPare X register
-    CPY, // ComPare Y register
-    DEC, // DECrecment memory
-    DEX, // DEcrement X register
-    DEY, // DEcrement Y register
-    EOR, // Exclusive OR
-    INC, // INCrement memory
-    INX, // INcrement X register
-    INY, // INcrement Y register
-    JMP, // JuMP
-    JSR, // Jump to SubRoutine
-    LDA, // LoaD Accumulator
-    LDX, // LoaD X register
-    LDY, // LoaD Y register
-    LSR, // Logical Shift Right
-    NOP, // No OPeration
-    ORA, // logical inclusive OR on Accumulator
-    PHA, // PusH Accumulator
-    PHP, // PusH Processor status
-    PLA, // PuLl Accumulator
-    PLP, // PuLl Processor status
-    ROL, // ROtate Left
-    ROR, // ROtate Right
-    RTI, // ReTurn from Interrupt
-    RTS, // ReTurn from Subroutine
-    SBC, // SuBtract with Carry
-    SEC, // SEt Carry flag
-    SED, // SEt Decimal flag
-    SEI, // SEt Interrupt disable flag
-    STA, // STore Accumulator
-    STX, // STore X register
-    STY, // STore Y register
-    TAX, // Transfer Accumulator to X register
-    TAY, // Transfer Accumulator to Y register
-    TSX, // Transfer Stack pointer to X register
-    TXA, // Transfer X to Accumulator
-    TXS, // Transfer X to Stack pointer
-    TYA, // Transfer Y to Accumulator
+    /// ADd with Carry
+    ADC,
+    /// logical AND
+    AND,
+    /// Arithmetic Shift Left
+    ASL,
+    /// Branch if Carry Clear
+    BCC,
+    /// Branch if Carry Set
+    BCS,
+    /// Branch if EQual
+    BEQ,
+    /// BIT test
+    BIT,
+    /// Branch if MInus
+    BMI,
+    /// Branch if Not Equal
+    BNE,
+    /// Branch if PLus
+    BPL,
+    /// BReaK (force interrupt)
+    BRK,
+    /// Branch if oVerflow Clear
+    BVC,
+    /// Branch if oVerflow Set
+    BVS,
+    /// CLear Carry flag
+    CLC,
+    /// CLear Decimal flag
+    CLD,
+    /// CLear Interrupt disable flag
+    CLI,
+    /// CLear oVerflow flag
+    CLV,
+    /// CoMPare
+    CMP,
+    /// ComPare X register
+    CPX,
+    /// ComPare Y register
+    CPY,
+    /// DECrecment memory
+    DEC,
+    /// DEcrement X register
+    DEX,
+    /// DEcrement Y register
+    DEY,
+    /// Exclusive OR
+    EOR,
+    /// INCrement memory
+    INC,
+    /// INcrement X register
+    INX,
+    /// INcrement Y register
+    INY,
+    /// JuMP
+    JMP,
+    /// Jump to SubRoutine
+    JSR,
+    /// LoaD Accumulator
+    LDA,
+    /// LoaD X register
+    LDX,
+    /// LoaD Y register
+    LDY,
+    /// Logical Shift Right
+    LSR,
+    /// No OPeration
+    NOP,
+    /// logical inclusive OR on Accumulator
+    ORA,
+    /// PusH Accumulator
+    PHA,
+    /// PusH Processor status
+    PHP,
+    /// PuLl Accumulator
+    PLA,
+    /// PuLl Processor status
+    PLP,
+    /// ROtate Left
+    ROL,
+    /// ROtate Right
+    ROR,
+    /// ReTurn from Interrupt
+    RTI,
+    /// ReTurn from Subroutine
+    RTS,
+    /// SuBtract with Carry
+    SBC,
+    /// SEt Carry flag
+    SEC,
+    /// SEt Decimal flag
+    SED,
+    /// SEt Interrupt disable flag
+    SEI,
+    /// STore Accumulator
+    STA,
+    /// STore X register
+    STX,
+    /// STore Y register
+    STY,
+    /// Transfer Accumulator to X register
+    TAX,
+    /// Transfer Accumulator to Y register
+    TAY,
+    /// Transfer Stack pointer to X register
+    TSX,
+    /// Transfer X to Accumulator
+    TXA,
+    /// Transfer X to Stack pointer
+    TXS,
+    /// Transfer Y to Accumulator
+    TYA,
 }
 
 pub trait Instructions {

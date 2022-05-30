@@ -10,10 +10,12 @@ mod memory;
 mod opcodes;
 mod status;
 
+/// One-byte stack pointer.
 #[derive(Debug, Clone, Copy)]
 pub struct StackPointer(u8);
 
 impl Default for StackPointer {
+    /// Default the stack pointer to the first address of the stack in memory.
     fn default() -> Self {
         Self(memory::STACK as u8)
     }
@@ -32,11 +34,13 @@ impl Into<u16> for StackPointer {
 }
 
 impl StackPointer {
+    /// Advance the stack pointer to the first unoccupied space in the stack.
     pub fn advance(&mut self, offset: i16) {
         self.0 = (self.0 as i16 + offset) as u8;
     }
 }
 
+/// Implementation of the NES's 6502-like 2A03 CPU.
 #[derive(Debug, Default)]
 pub struct CPU {
     pub accumulator: u8,
@@ -53,16 +57,22 @@ impl CPU {
         Default::default()
     }
 
+    /// Load a program into memory, reset the CPU to its initial state, and run
+    /// the program.
     pub fn load_and_run(&mut self, program: Vec<u8>) {
         self.load(program);
         self.reset();
         self.run();
     }
 
+    /// Load a program into memory.
     pub fn load(&mut self, program: Vec<u8>) {
         self.memory.load(program);
     }
 
+    /// Set the program counter to the value at the designated reset address in
+    /// memory, and reset all flags and internal registers to their default
+    /// values, while preserving the contents of memory.
     pub fn reset(&mut self) {
         *self = Self {
             program_counter: self.memory.read(memory::RESET),
@@ -71,6 +81,7 @@ impl CPU {
         }
     }
 
+    /// Read and execute each instruction in the program.
     pub fn run(&mut self) {
         let ref opcodes = *opcodes::OPCODES_MAP;
 
@@ -142,12 +153,14 @@ impl CPU {
                 Instruction::TYA => self.tya(),
             }
 
+            // Break if the program counter is empty.
             if self.program_counter == 0 {
                 return;
             }
         }
     }
 
+    /// Add the given value to the accumulator.
     fn add_to_accumulator(&mut self, value: u8) {
         let sum = self.accumulator as u16
             + value as u16
@@ -166,17 +179,18 @@ impl CPU {
         self.set_accumulator(result);
     }
 
+    /// Jump to the instruction at the given address if the condition is met.
     fn branch(&mut self, addr: u16, condition: bool) {
         if condition {
             self.program_counter = addr;
         }
     }
 
+    /// Retrieve an operand address based on the given addressing mode.
     fn get_operand_address(&mut self, mode: &AddressingMode) -> Option<u16> {
         match mode {
-            /* Return the program counter, and increment it manually since we'll
-             * be reading it directly.
-             */
+            // Return the program counter, and increment it manually since we'll
+            // be reading it directly.
             AddressingMode::Immediate => {
                 let pc = Some(self.program_counter);
                 self.program_counter += 1;
@@ -225,50 +239,58 @@ impl CPU {
         (hi as u16) << 8 | (lo as u16)
     }
 
-    /**
-     * Read the value at the address of the program counter, and increment the
-     * counter by the number of bytes in the returned value.
-     */
+    /// Read the value at the address of the program counter, and increment the
+    /// counter by the number of bytes in the returned value.
     fn read_program_counter<T: MemoryValue>(&mut self) -> T {
         let val: T = self.memory.read(self.program_counter);
         self.program_counter += T::BITS / 8;
         val
     }
 
+    /// Set the accumulator to the given value and update the negative and zero
+    /// status bits.
     fn set_accumulator(&mut self, value: u8) {
         self.accumulator = value;
-
-        self.status.set_negative(self.accumulator);
-        self.status.set_zero(self.accumulator);
+        self.set_status_negative_zero(value)
     }
 
+    /// Set the X register to the given value and update the negative and zero
+    /// status bits.
     fn set_index_x(&mut self, value: u8) {
         self.index_x = value;
-
-        self.status.set_negative(self.index_x);
-        self.status.set_zero(self.index_x);
+        self.set_status_negative_zero(value)
     }
 
+    /// Set the Y register to the given value and update the negative and zero
+    /// status bits.
     fn set_index_y(&mut self, value: u8) {
         self.index_y = value;
+        self.set_status_negative_zero(value)
+    }
 
-        self.status.set_negative(self.index_y);
-        self.status.set_zero(self.index_y);
+    /// Set the negative and zero status bits accordingly for the given value.
+    fn set_status_negative_zero(&mut self, value: u8) {
+        self.status.set_negative(value);
+        self.status.set_zero(value);
     }
 
     /*
+    /// Pop a value off of the stack and advance the stack pointer in reverse.
     fn stack_pop<T: MemoryValue>(&mut self) -> T {
-        let val: T = self.memory.read(self.stack_pointer.into());
         self.stack_pointer.advance(T::BITS as i16 / -8);
+        let val: T = self.memory.read(self.stack_pointer.into());
         val
     }
     */
 
+    /// Push a value onto the stack and advance the stack pointer.
     fn stack_push<T: MemoryValue>(&mut self, value: T) {
         self.memory.write(self.stack_pointer.into(), value);
         self.stack_pointer.advance(T::BITS as i16 / 8);
     }
 
+    /// Call the given callback that requires an operand and panic if the operand
+    /// is missing.
     fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
     where
         CB: Fn(&mut Self, u16),
@@ -278,14 +300,38 @@ impl CPU {
 }
 
 impl Instructions for CPU {
+    /// Add the accumulator, the value at the given address, and the carry bit,
+    /// and store the result in the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set if the result overflows past bit 7.
+    /// * Z - set if the result is zero.
+    /// * V - set if bit 7 of the result is incorrect.
+    /// * N - set if bit 7 of the result is set.
     fn adc(&mut self, addr: u16) {
         self.add_to_accumulator(self.memory.read(addr));
     }
 
+    /// Perform a bitwise and between the accumulator and the value at the given
+    /// address, and store the result in the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is zero.
+    /// * N - set if bit 7 of the result is set.
     fn and(&mut self, addr: u16) {
         self.set_accumulator(self.accumulator & self.memory.read::<u8>(addr));
     }
 
+    /// Shift the accumulator or the value at the given address to the left by 1
+    /// and store the result in the same location.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set if bit 7 of the initial value is set.
+    /// * Z - set if the result is zero.
+    /// * N - set if bit 7 of the result is set.
     fn asl(&mut self, addr: Option<u16>) {
         let value = match addr {
             Some(addr) => self.memory.read(addr),
@@ -304,18 +350,28 @@ impl Instructions for CPU {
         };
     }
 
+    /// Branch to the given address if the carry bit is not set.
     fn bcc(&mut self, addr: u16) {
         self.branch(addr, !self.status.contains(Status::Carry));
     }
 
+    /// Branch to the given address if the carry bit is set.
     fn bcs(&mut self, addr: u16) {
         self.branch(addr, self.status.contains(Status::Carry));
     }
 
+    /// Branch to the given address if the zero bit is set.
     fn beq(&mut self, addr: u16) {
         self.branch(addr, self.status.contains(Status::Zero));
     }
 
+    /// Perform a bit test on the value at the given address.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the bitwise and of the accumulator and the value is zero.
+    /// * V - set to bit 6 of the value.
+    /// * N - set to bit 7 of the value.
     fn bit(&mut self, addr: u16) {
         let value: u8 = self.memory.read(addr);
 
@@ -324,18 +380,29 @@ impl Instructions for CPU {
         self.status.set_negative(value);
     }
 
+    /// Branch to the given address if the negative bit is set.
     fn bmi(&mut self, addr: u16) {
         self.branch(addr, self.status.contains(Status::Negative));
     }
 
+    /// Branch to the given address if the zero bit is not set.
     fn bne(&mut self, addr: u16) {
         self.branch(addr, !self.status.contains(Status::Zero));
     }
 
+    /// Branch to the given address if the negative bit is not set.
     fn bpl(&mut self, addr: u16) {
         self.branch(addr, !self.status.contains(Status::Negative));
     }
 
+    /// Force an interrupt, pushing the the program counter and processor status
+    /// onto the stack, setting the program counter to the value at the
+    /// designated interrupt address, and set the break bits.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * B - set to 1.
+    /// * B2 - set to 1.
     fn brk(&mut self) {
         self.stack_push(self.program_counter);
         self.stack_push(self.status.bits());
@@ -346,42 +413,91 @@ impl Instructions for CPU {
         self.status.set(Status::Break2, true);
     }
 
+    /// Branch to the given address if the overflow bit is not set.
     fn bvc(&mut self, addr: u16) {
         self.branch(addr, !self.status.contains(Status::Overflow));
     }
 
+    /// Branch to the given address if the overflow bit is set.
     fn bvs(&mut self, addr: u16) {
         self.branch(addr, self.status.contains(Status::Overflow));
     }
 
+    /// Clear the carry bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set to 0.
     fn clc(&mut self) {
         self.status.set(Status::Carry, false);
     }
 
+    /// Clear the decimal bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * D - set to 0.
     fn cld(&mut self) {
         self.status.set(Status::Decimal, false);
     }
 
+    /// Clear the interrupt disable bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * I - set to 0.
     fn cli(&mut self) {
         self.status.set(Status::InterruptDisable, false);
     }
 
+    /// Clear the overflow bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * V - set to 0.
     fn clv(&mut self) {
         self.status.set(Status::Overflow, false);
     }
 
+    /// Perform a bitwise exclusive or between the accumulator and the value at
+    /// the given address, and store the result in the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn eor(&mut self, addr: u16) {
         self.set_accumulator(self.accumulator ^ self.memory.read::<u8>(addr));
     }
 
+    /// Increment the X register by 1, wrapping to 0 if the result would
+    /// overflow.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn inx(&mut self) {
         self.set_index_x(self.index_x.wrapping_add(1));
     }
 
+    /// Set the accumulator to the value at the given address.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn lda(&mut self, addr: u16) {
         self.set_accumulator(self.memory.read(addr));
     }
 
+    /// Perform a bitwise or between the accumulator and the value at the given
+    /// address, and store the result in the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn ora(&mut self, addr: u16) {
         self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
     }
@@ -394,50 +510,99 @@ impl Instructions for CPU {
         );
     }
 
+    /// Set the carry bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set to 1.
     fn sec(&mut self) {
         self.status.set(Status::Carry, true);
     }
 
+    /// Set the decimal bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * D - set to 1.
     fn sed(&mut self) {
         self.status.set(Status::Decimal, true);
     }
 
+    /// Set the interrupt disable bit.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * I - set to 1.
     fn sei(&mut self) {
         self.status.set(Status::InterruptDisable, true);
     }
 
+    /// Store the accumulator at the given address.
     fn sta(&mut self, addr: u16) {
         self.memory.write(addr, self.accumulator);
     }
 
+    /// Store the X register at the given address.
     fn stx(&mut self, addr: u16) {
         self.memory.write(addr, self.index_x);
     }
 
+    /// Store the Y register at the given address.
     fn sty(&mut self, addr: u16) {
         self.memory.write(addr, self.index_y);
     }
 
+    /// Store the accumulator in the X register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn tax(&mut self) {
         self.set_index_x(self.accumulator);
     }
 
+    /// Store the accumulator in the Y register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn tay(&mut self) {
         self.set_index_y(self.accumulator);
     }
 
+    /// Store the stack pointer in the X register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn tsx(&mut self) {
         self.set_index_x(self.stack_pointer.into());
     }
 
+    /// Store the X register in the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn txa(&mut self) {
         self.set_accumulator(self.index_x);
     }
 
+    /// Store the X register in the stack pointer.
     fn txs(&mut self) {
         self.stack_pointer = StackPointer(self.index_x);
     }
 
+    /// Store the Y register in the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn tya(&mut self) {
         self.set_accumulator(self.index_y);
     }
