@@ -3,12 +3,14 @@ use std::fmt::LowerHex;
 use self::{
     instructions::{Instruction, Instructions},
     memory::{Memory, MemoryValue},
+    mode::Mode,
     opcodes::AddressingMode,
     status::Status,
 };
 
 mod instructions;
 mod memory;
+pub mod mode;
 mod opcodes;
 mod status;
 
@@ -52,6 +54,7 @@ pub struct CPU {
     pub stack_pointer: StackPointer,
     pub status: Status,
     memory: Memory,
+    pub mode: Mode,
 }
 
 impl CPU {
@@ -69,7 +72,7 @@ impl CPU {
 
     /// Load a program into memory.
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory.load(program);
+        self.memory.load(program, self.mode);
     }
 
     /// Set the program counter to the value at the designated reset address in

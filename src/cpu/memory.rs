@@ -1,4 +1,5 @@
-pub const PROGRAM_ROM: usize = 0x8000;
+use super::mode::Mode;
+
 pub const MEMORY_SIZE: usize = 0x10000;
 
 pub const STACK: u16 = 0x00FD;
@@ -64,9 +65,14 @@ impl Default for Memory {
 
 impl Memory {
     /// Load a program into the program ROM section of memory.
-    pub fn load(&mut self, program: Vec<u8>) {
-        self.0[PROGRAM_ROM..(PROGRAM_ROM + program.len())].copy_from_slice(&program[..]);
-        self.write(RESET, PROGRAM_ROM as u16);
+    pub fn load(&mut self, program: Vec<u8>, mode: Mode) {
+        let program_rom = match mode {
+            Mode::Mos6502 => 0x0600,
+            Mode::Nes2A03 => 0x8000,
+        };
+
+        self.0[program_rom..(program_rom + program.len())].copy_from_slice(&program[..]);
+        self.write(RESET, program_rom as u16);
     }
 
     /// Read a u8 or u16 from memory.

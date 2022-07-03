@@ -1,6 +1,8 @@
+use cpu::mode::Mode;
+
 use crate::cpu::CPU;
 
-mod cpu;
+pub mod cpu;
 
 fn main() {
     let game_code = vec![
@@ -29,5 +31,6 @@ fn main() {
 
     let mut cpu = CPU::new();
 
+    cpu.mode = Mode::Mos6502;
     cpu.load_and_run(game_code);
 }
