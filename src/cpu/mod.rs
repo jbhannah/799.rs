@@ -184,10 +184,11 @@ impl CPU {
         self.set_accumulator(result);
     }
 
-    /// Jump to the instruction at the given address if the condition is met.
-    fn branch(&mut self, addr: u16, condition: bool) {
+    /// If the condition is met, add the relative displacement to the program
+    /// counter to branch to a new location.
+    fn branch(&mut self, displacement: u16, condition: bool) {
         if condition {
-            self.program_counter = addr;
+            self.program_counter += displacement;
         }
     }
 
@@ -359,18 +360,18 @@ impl Instructions for CPU {
     }
 
     /// Branch to the given address if the carry bit is not set.
-    fn bcc(&mut self, addr: u16) {
-        self.branch(addr, !self.status.contains(Status::Carry));
+    fn bcc(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Carry));
     }
 
     /// Branch to the given address if the carry bit is set.
-    fn bcs(&mut self, addr: u16) {
-        self.branch(addr, self.status.contains(Status::Carry));
+    fn bcs(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Carry));
     }
 
     /// Branch to the given address if the zero bit is set.
-    fn beq(&mut self, addr: u16) {
-        self.branch(addr, self.status.contains(Status::Zero));
+    fn beq(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Zero));
     }
 
     /// Perform a bit test on the value at the given address.
@@ -389,18 +390,18 @@ impl Instructions for CPU {
     }
 
     /// Branch to the given address if the negative bit is set.
-    fn bmi(&mut self, addr: u16) {
-        self.branch(addr, self.status.contains(Status::Negative));
+    fn bmi(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Negative));
     }
 
     /// Branch to the given address if the zero bit is not set.
-    fn bne(&mut self, addr: u16) {
-        self.branch(addr, !self.status.contains(Status::Zero));
+    fn bne(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Zero));
     }
 
     /// Branch to the given address if the negative bit is not set.
-    fn bpl(&mut self, addr: u16) {
-        self.branch(addr, !self.status.contains(Status::Negative));
+    fn bpl(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Negative));
     }
 
     /// Force an interrupt, pushing the the program counter and processor status
@@ -422,13 +423,13 @@ impl Instructions for CPU {
     }
 
     /// Branch to the given address if the overflow bit is not set.
-    fn bvc(&mut self, addr: u16) {
-        self.branch(addr, !self.status.contains(Status::Overflow));
+    fn bvc(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Overflow));
     }
 
     /// Branch to the given address if the overflow bit is set.
-    fn bvs(&mut self, addr: u16) {
-        self.branch(addr, self.status.contains(Status::Overflow));
+    fn bvs(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Overflow));
     }
 
     /// Clear the carry bit.
