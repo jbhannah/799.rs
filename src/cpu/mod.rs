@@ -117,9 +117,9 @@ impl CPU {
                 Instruction::CLD => self.cld(),
                 Instruction::CLI => self.cli(),
                 Instruction::CLV => self.clv(),
-                Instruction::CMP => todo!(),
-                Instruction::CPX => todo!(),
-                Instruction::CPY => todo!(),
+                Instruction::CMP => self.with_operand(Self::cmp, addr),
+                Instruction::CPX => self.with_operand(Self::cpx, addr),
+                Instruction::CPY => self.with_operand(Self::cpy, addr),
                 Instruction::DEC => todo!(),
                 Instruction::DEX => todo!(),
                 Instruction::DEY => todo!(),
@@ -190,6 +190,17 @@ impl CPU {
         if condition {
             self.program_counter += displacement;
         }
+    }
+
+    /// Compare the given value to the value at the given address, and set the
+    /// carry, zero, and negative flags accordingly.
+    fn compare(&mut self, value: u8, addr: u16) {
+        let rhs: u8 = self.memory.read(addr);
+        let result = value.wrapping_sub(rhs);
+
+        self.status.set(Status::Carry, value >= rhs);
+        self.status.set_zero(result);
+        self.status.set_negative(result);
     }
 
     /// Retrieve an operand address based on the given addressing mode.
@@ -466,6 +477,39 @@ impl Instructions for CPU {
     /// * V - set to 0.
     fn clv(&mut self) {
         self.status.set(Status::Overflow, false);
+    }
+
+    /// Compare the value at the given address to the accumulator.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set if accumulator >= value at address.
+    /// * Z - set if accumulator == value at address.
+    /// * N - set if accumulator <= value at address.
+    fn cmp(&mut self, addr: u16) {
+        self.compare(self.accumulator, addr);
+    }
+
+    /// Compare the value at the given address to the X register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set if X register >= value at address.
+    /// * Z - set if X register == value at address.
+    /// * N - set if X register <= value at address.
+    fn cpx(&mut self, addr: u16) {
+        self.compare(self.index_x, addr);
+    }
+
+    /// Compare the value at the given address to the Y register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set if Y register >= value at address.
+    /// * Z - set if Y register == value at address.
+    /// * N - set if Y register <= value at address.
+    fn cpy(&mut self, addr: u16) {
+        self.compare(self.index_y, addr);
     }
 
     /// Perform a bitwise exclusive or between the accumulator and the value at

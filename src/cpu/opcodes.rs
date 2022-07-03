@@ -84,6 +84,23 @@ lazy_static! {
         OpCode::new(0x58, Instruction::CLI, 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0xb8, Instruction::CLV, 1, 2, AddressingMode::NoneAddressing),
 
+        OpCode::new(0xc9, Instruction::CMP, 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xc5, Instruction::CMP, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xd5, Instruction::CMP, 2, 4, AddressingMode::ZeroPageX),
+        OpCode::new(0xcd, Instruction::CMP, 3, 4, AddressingMode::Absolute),
+        OpCode::new(0xdd, Instruction::CMP, 3, 4 /* +1 if page crossed */, AddressingMode::AbsoluteX),
+        OpCode::new(0xd9, Instruction::CMP, 3, 4 /* +1 if page crossed */, AddressingMode::AbsoluteY),
+        OpCode::new(0xc1, Instruction::CMP, 2, 6, AddressingMode::IndirectX),
+        OpCode::new(0xd1, Instruction::CMP, 2, 5 /* +1 if page crossed */, AddressingMode::IndirectY),
+
+        OpCode::new(0xe0, Instruction::CPX, 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xe4, Instruction::CPX, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xec, Instruction::CPX, 3, 4, AddressingMode::Absolute),
+
+        OpCode::new(0xc0, Instruction::CPY, 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xc4, Instruction::CPY, 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xcc, Instruction::CPY, 3, 4, AddressingMode::Absolute),
+
         OpCode::new(0x49, Instruction::EOR, 2, 2, AddressingMode::Immediate),
         OpCode::new(0x45, Instruction::EOR, 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x55, Instruction::EOR, 2, 4, AddressingMode::ZeroPageX),

@@ -132,6 +132,9 @@ pub trait Instructions {
     fn cld(&mut self);
     fn cli(&mut self);
     fn clv(&mut self);
+    fn cmp(&mut self, addr: u16);
+    fn cpx(&mut self, addr: u16);
+    fn cpy(&mut self, addr: u16);
     fn eor(&mut self, addr: u16);
     fn inx(&mut self);
     fn jsr(&mut self, addr: u16);
