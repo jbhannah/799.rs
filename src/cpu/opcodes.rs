@@ -118,7 +118,13 @@ lazy_static! {
         OpCode::new(0x41, Instruction::EOR, 2, 6, AddressingMode::IndirectX),
         OpCode::new(0x51, Instruction::EOR, 2, 5 /* +1 if page crossed */, AddressingMode::IndirectY),
 
+        OpCode::new(0xe6, Instruction::INC, 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0xf6, Instruction::INC, 2, 6, AddressingMode::ZeroPageX),
+        OpCode::new(0xee, Instruction::INC, 3, 6, AddressingMode::Absolute),
+        OpCode::new(0xfe, Instruction::INC, 3, 7, AddressingMode::AbsoluteX),
+
         OpCode::new(0xe8, Instruction::INX, 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0xc8, Instruction::INY, 1, 2, AddressingMode::NoneAddressing),
 
         OpCode::new(0x20, Instruction::JSR, 3, 6, AddressingMode::Absolute),
 

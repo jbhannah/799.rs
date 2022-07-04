@@ -215,8 +215,22 @@ impl Instructions for CPU {
         self.set_accumulator(self.accumulator ^ self.memory.read::<u8>(addr));
     }
 
+    fn inc(&mut self, addr: u16) {
+        let value: u8 = self.memory.read(addr);
+        let result = value.wrapping_add(1);
+
+        self.memory.write(addr, result);
+
+        self.status.set_zero(result);
+        self.status.set_negative(result);
+    }
+
     fn inx(&mut self) {
         self.set_index_x(self.index_x.wrapping_add(1));
+    }
+
+    fn iny(&mut self) {
+        self.set_index_y(self.index_y.wrapping_add(1));
     }
 
     fn jsr(&mut self, addr: u16) {

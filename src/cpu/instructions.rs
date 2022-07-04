@@ -276,6 +276,15 @@ pub trait Instructions {
     /// * N - set to bit 7 of the result.
     fn eor(&mut self, addr: u16);
 
+    /// Increment the value at the given address by 1, wrapping to 0 if the
+    /// result would overflow.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
+    fn inc(&mut self, addr: u16);
+
     /// Increment the X register by 1, wrapping to 0 if the result would
     /// overflow.
     ///
@@ -284,6 +293,15 @@ pub trait Instructions {
     /// * Z - set if the result is 0.
     /// * N - set to bit 7 of the result.
     fn inx(&mut self);
+
+    /// Increment the Y register by 1, wrapping to 0 if the result would
+    /// overflow.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
+    fn iny(&mut self);
 
     /// Push the address of the next sequential instruction onto the stack, and
     /// set the program counter to the given address.

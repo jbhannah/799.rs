@@ -72,11 +72,34 @@ fn test_0xa8_tay() {
 }
 
 #[test]
+fn test_0xe6_inc_zero_page() {
+    let mut cpu = CPU::new();
+    cpu.memory.write(0x10, 0x55 as u8);
+    cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
+
+    assert_eq!(cpu.memory.read::<u8>(0x10), 0x56);
+}
+
+#[test]
 fn test_0xe8_inx_overflow() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0xff, 0xaa, 0xe8, 0xe8, 0x00]);
+    cpu.load(vec![0xe8, 0xe8, 0x00]);
+    cpu.reset();
+    cpu.index_x = 0xff;
+    cpu.run();
 
     assert_eq!(cpu.index_x, 1);
+}
+
+#[test]
+fn test_0xe8_iny_overflow() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0xc8, 0xc8, 0x00]);
+    cpu.reset();
+    cpu.index_y = 0xff;
+    cpu.run();
+
+    assert_eq!(cpu.index_y, 1);
 }
 
 #[test]
