@@ -135,6 +135,9 @@ pub trait Instructions {
     fn cmp(&mut self, addr: u16);
     fn cpx(&mut self, addr: u16);
     fn cpy(&mut self, addr: u16);
+    fn dec(&mut self, addr: u16);
+    fn dex(&mut self);
+    fn dey(&mut self);
     fn eor(&mut self, addr: u16);
     fn inx(&mut self);
     fn jsr(&mut self, addr: u16);

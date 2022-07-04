@@ -120,9 +120,9 @@ impl CPU {
                 Instruction::CMP => self.with_operand(Self::cmp, addr),
                 Instruction::CPX => self.with_operand(Self::cpx, addr),
                 Instruction::CPY => self.with_operand(Self::cpy, addr),
-                Instruction::DEC => todo!(),
-                Instruction::DEX => todo!(),
-                Instruction::DEY => todo!(),
+                Instruction::DEC => self.with_operand(Self::dec, addr),
+                Instruction::DEX => self.dex(),
+                Instruction::DEY => self.dey(),
                 Instruction::EOR => self.with_operand(Self::eor, addr),
                 Instruction::INC => todo!(),
                 Instruction::INX => self.inx(),
@@ -510,6 +510,24 @@ impl Instructions for CPU {
     /// * N - set if Y register <= value at address.
     fn cpy(&mut self, addr: u16) {
         self.compare(self.index_y, addr);
+    }
+
+    fn dec(&mut self, addr: u16) {
+        let value: u8 = self.memory.read(addr);
+        let result = value.wrapping_sub(1);
+
+        self.memory.write(addr, result);
+
+        self.status.set_zero(result);
+        self.status.set_negative(result);
+    }
+
+    fn dex(&mut self) {
+        self.set_index_x(self.index_x.wrapping_sub(1));
+    }
+
+    fn dey(&mut self) {
+        self.set_index_y(self.index_y.wrapping_sub(1));
     }
 
     /// Perform a bitwise exclusive or between the accumulator and the value at
