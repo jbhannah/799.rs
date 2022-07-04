@@ -142,6 +142,8 @@ pub trait Instructions {
     fn inx(&mut self);
     fn jsr(&mut self, addr: u16);
     fn lda(&mut self, addr: u16);
+    fn ldx(&mut self, addr: u16);
+    fn ldy(&mut self, addr: u16);
     fn ora(&mut self, addr: u16);
     fn rts(&mut self);
     fn sbc(&mut self, addr: u16);

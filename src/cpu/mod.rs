@@ -130,8 +130,8 @@ impl CPU {
                 Instruction::JMP => todo!(),
                 Instruction::JSR => self.with_operand(Self::jsr, addr),
                 Instruction::LDA => self.with_operand(Self::lda, addr),
-                Instruction::LDX => todo!(),
-                Instruction::LDY => todo!(),
+                Instruction::LDX => self.with_operand(Self::ldx, addr),
+                Instruction::LDY => self.with_operand(Self::ldy, addr),
                 Instruction::LSR => todo!(),
                 Instruction::NOP => todo!(),
                 Instruction::ORA => self.with_operand(Self::ora, addr),
@@ -569,6 +569,26 @@ impl Instructions for CPU {
         self.set_accumulator(self.memory.read(addr));
     }
 
+    /// Set the X register to the value at the given address.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
+    fn ldx(&mut self, addr: u16) {
+        self.set_index_x(self.memory.read(addr));
+    }
+
+    /// Set the Y register to the value at the given address.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
+    fn ldy(&mut self, addr: u16) {
+        self.set_index_y(self.memory.read(addr));
+    }
+
     /// Perform a bitwise or between the accumulator and the value at the given
     /// address, and store the result in the accumulator.
     ///
@@ -703,6 +723,22 @@ impl Instructions for CPU {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn test_0xa0_ldy_immediate() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa0, 0x05, 0x00]);
+
+        assert_eq!(cpu.index_y, 0x05);
+    }
+
+    #[test]
+    fn test_0xa2_ldx_immediate() {
+        let mut cpu = CPU::new();
+        cpu.load_and_run(vec![0xa2, 0x05, 0x00]);
+
+        assert_eq!(cpu.index_x, 0x05);
+    }
 
     #[test]
     fn test_0xa5_lda_zero_page() {
