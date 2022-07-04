@@ -512,6 +512,12 @@ impl Instructions for CPU {
         self.compare(self.index_y, addr);
     }
 
+    /// Decrement the value at the given address.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn dec(&mut self, addr: u16) {
         let value: u8 = self.memory.read(addr);
         let result = value.wrapping_sub(1);
@@ -522,10 +528,22 @@ impl Instructions for CPU {
         self.status.set_negative(result);
     }
 
+    /// Decrement the value in the X register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn dex(&mut self) {
         self.set_index_x(self.index_x.wrapping_sub(1));
     }
 
+    /// Decrement the value in the Y register.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the result is 0.
+    /// * N - set to bit 7 of the result.
     fn dey(&mut self) {
         self.set_index_y(self.index_y.wrapping_sub(1));
     }
