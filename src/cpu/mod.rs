@@ -966,4 +966,35 @@ mod test {
         assert!(!cpu.status.contains(Status::Carry));
         assert_eq!(cpu.memory.read::<u8>(0x00), 0b1010_1010);
     }
+
+    #[test]
+    fn test_0xc6_dec_absolute() {
+        let mut cpu = CPU::new();
+        cpu.memory.write(0x1010, 0x42 as u8);
+        cpu.load_and_run(vec![0xce, 0x10, 0x10, 0x00]);
+
+        assert_eq!(cpu.memory.read::<u8>(0x1010), 0x41);
+    }
+
+    #[test]
+    fn test_0xca_dex() {
+        let mut cpu = CPU::new();
+        cpu.load(vec![0xca, 0x00]);
+        cpu.reset();
+        cpu.index_x = 0x42;
+        cpu.run();
+
+        assert_eq!(cpu.index_x, 0x41);
+    }
+
+    #[test]
+    fn test_0x88_dey() {
+        let mut cpu = CPU::new();
+        cpu.load(vec![0x88, 0x00]);
+        cpu.reset();
+        cpu.index_y = 0x42;
+        cpu.run();
+
+        assert_eq!(cpu.index_y, 0x41);
+    }
 }
