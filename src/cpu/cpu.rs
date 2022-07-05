@@ -106,8 +106,7 @@ impl Instructions for CPU {
         let result = value << 1;
 
         self.status.set(Status::Carry, value >> 7 == 1);
-        self.status.set_negative(result);
-        self.status.set_zero(result);
+        self.set_status_negative_zero(result);
 
         match addr {
             Some(addr) => self.memory.write(addr, result),
@@ -199,8 +198,7 @@ impl Instructions for CPU {
 
         self.memory.write(addr, result);
 
-        self.status.set_zero(result);
-        self.status.set_negative(result);
+        self.set_status_negative_zero(result);
     }
 
     fn dex(&mut self) {
@@ -221,8 +219,7 @@ impl Instructions for CPU {
 
         self.memory.write(addr, result);
 
-        self.status.set_zero(result);
-        self.status.set_negative(result);
+        self.set_status_negative_zero(result);
     }
 
     fn inx(&mut self) {
