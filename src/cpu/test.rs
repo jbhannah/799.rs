@@ -278,3 +278,21 @@ fn test_0x88_dey() {
 
     assert_eq!(cpu.index_y, 0x41);
 }
+
+#[test]
+fn test_0x2a_rol_accumulator() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xa9, 0b1010_1010, 0x2a, 0x00]);
+
+    assert_eq!(cpu.accumulator, 0b0101_0100);
+    assert!(cpu.status.contains(Status::Carry));
+}
+
+#[test]
+fn test_0x6a_ror_accumulator() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xa9, 0b0101_0101, 0x6a, 0x00]);
+
+    assert_eq!(cpu.accumulator, 0b0010_1010);
+    assert!(cpu.status.contains(Status::Carry));
+}

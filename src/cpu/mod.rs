@@ -143,8 +143,8 @@ impl CPU {
                 Instruction::PHP => todo!(),
                 Instruction::PLA => todo!(),
                 Instruction::PLP => todo!(),
-                Instruction::ROL => todo!(),
-                Instruction::ROR => todo!(),
+                Instruction::ROL => self.rol(addr), // handles None case to operate on accumulator
+                Instruction::ROR => self.ror(addr), // handles None case to operate on accumulator
                 Instruction::RTI => todo!(),
                 Instruction::RTS => self.rts(),
                 Instruction::SBC => self.with_operand(Self::sbc, addr),

@@ -254,6 +254,40 @@ impl Instructions for CPU {
         self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
     }
 
+    fn rol(&mut self, addr: Option<u16>) {
+        let initial = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = (initial << 1) | self.status.and(Status::Carry).bits();
+
+        self.status.set(Status::Carry, initial >> 7 == 1);
+        self.set_status_negative_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        };
+    }
+
+    fn ror(&mut self, addr: Option<u16>) {
+        let initial = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = (initial >> 1) | (self.status.and(Status::Carry).bits() << 7);
+
+        self.status.set(Status::Carry, initial & 1 == 1);
+        self.set_status_negative_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        };
+    }
+
     fn rts(&mut self) {
         self.program_counter = self.stack_pop();
     }

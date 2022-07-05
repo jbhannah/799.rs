@@ -340,6 +340,24 @@ pub trait Instructions {
     /// * N - set to bit 7 of the result.
     fn ora(&mut self, addr: u16);
 
+    /// Rotate the bits in the accumulator or at the given address one place to
+    /// the left through the carry bit.
+    ///
+    /// Processor status bits affected:
+    /// * C - set to bit 7 of the initial value.
+    /// * Z - set if the result is 0.
+    /// * N - set if the bit 7 of the new value is set.
+    fn rol(&mut self, addr: Option<u16>);
+
+    /// Rotate the bits in the accumulator or at the given address one place to
+    /// the right through the carry bit.
+    ///
+    /// Processor status bits affected:
+    /// * C - set to bit 0 of the initial value.
+    /// * Z - set if the result is 0.
+    /// * N - set if the bit 7 of the new value is set.
+    fn ror(&mut self, addr: Option<u16>);
+
     /// Return from a subroutine by setting the program counter to the last
     /// value on the stack.
     fn rts(&mut self);
