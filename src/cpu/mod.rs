@@ -131,7 +131,7 @@ impl CPU {
                 Instruction::INC => self.with_operand(Self::inc, addr),
                 Instruction::INX => self.inx(),
                 Instruction::INY => self.iny(),
-                Instruction::JMP => todo!(),
+                Instruction::JMP => self.with_operand(Self::jmp, addr),
                 Instruction::JSR => self.with_operand(Self::jsr, addr),
                 Instruction::LDA => self.with_operand(Self::lda, addr),
                 Instruction::LDX => self.with_operand(Self::ldx, addr),
@@ -198,6 +198,11 @@ impl CPU {
                     .wrapping_add(self.index_y as u16),
             ),
 
+            AddressingMode::Indirect => {
+                let addr: u16 = self.read_program_counter();
+                // TODO: fail if addr as u8 == 0xff
+                Some(self.memory.read(addr))
+            }
             AddressingMode::IndirectX => {
                 let ptr = self.read_program_counter::<u8>().wrapping_add(self.index_x);
                 Some(self.read_indirect(ptr))

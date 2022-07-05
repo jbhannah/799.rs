@@ -230,6 +230,10 @@ impl Instructions for CPU {
         self.set_index_y(self.index_y.wrapping_add(1));
     }
 
+    fn jmp(&mut self, addr: u16) {
+        self.program_counter = addr;
+    }
+
     fn jsr(&mut self, addr: u16) {
         self.stack_push(self.program_counter + 1);
         self.program_counter = addr;

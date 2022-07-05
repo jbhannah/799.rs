@@ -296,3 +296,17 @@ fn test_0x6a_ror_accumulator() {
     assert_eq!(cpu.accumulator, 0b0010_1010);
     assert!(cpu.status.contains(Status::Carry));
 }
+
+#[test]
+fn test_0x6c_jmp_indirect() {
+    let mut cpu = CPU::new();
+    let addr: u16 = 0xbafc;
+
+    cpu.memory.write(0x0120, addr); // set the value at $0120 and $0121 to the address of the next instruction
+    cpu.memory.write(addr, 0x42a9 as u16); // load 0x42 into the accumulator (0xa9, 0x42 stored little-endian)
+    cpu.memory.write(addr + 2, 0x00 as u8);
+
+    cpu.load_and_run(vec![0x6c, 0x20, 0x01, 0x00]);
+
+    assert_eq!(cpu.accumulator, 0x42);
+}

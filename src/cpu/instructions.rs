@@ -303,6 +303,9 @@ pub trait Instructions {
     /// * N - set to bit 7 of the result.
     fn iny(&mut self);
 
+    /// Set the program counter to the specified address.
+    fn jmp(&mut self, addr: u16);
+
     /// Push the address of the next sequential instruction onto the stack, and
     /// set the program counter to the given address.
     fn jsr(&mut self, addr: u16);

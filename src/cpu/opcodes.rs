@@ -12,6 +12,7 @@ pub enum AddressingMode {
     Absolute,
     AbsoluteX,
     AbsoluteY,
+    Indirect,
     IndirectX,
     IndirectY,
     Relative,
@@ -125,6 +126,9 @@ lazy_static! {
 
         OpCode::new(0xe8, Instruction::INX, 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0xc8, Instruction::INY, 1, 2, AddressingMode::NoneAddressing),
+
+        OpCode::new(0x4c, Instruction::JMP, 3, 3, AddressingMode::Absolute),
+        OpCode::new(0x6c, Instruction::JMP, 3, 5, AddressingMode::Indirect),
 
         OpCode::new(0x20, Instruction::JSR, 3, 6, AddressingMode::Absolute),
 
