@@ -327,7 +327,7 @@ impl Cpu6502 for CPU {
 
     fn brk(&mut self) {
         self.stack_push(self.program_counter);
-        self.stack_push(self.status.bits());
+        self.php();
 
         self.program_counter = self.memory.read(memory::INTERRUPT);
 
@@ -500,6 +500,11 @@ impl Cpu6502 for CPU {
             Some(addr) => self.memory.write(addr, result),
             None => self.accumulator = result,
         };
+    }
+
+    fn rti(&mut self) {
+        self.plp();
+        self.rts();
     }
 
     fn rts(&mut self) {

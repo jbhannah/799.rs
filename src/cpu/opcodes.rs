@@ -187,6 +187,7 @@ lazy_static! {
         OpCode::new(0x6e, Instruction::Ror, 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7e, Instruction::Ror, 3, 7, AddressingMode::AbsoluteX),
 
+        OpCode::new(0x40, Instruction::Rti, 1, 6, AddressingMode::NoneAddressing),
         OpCode::new(0x60, Instruction::Rts, 1, 6, AddressingMode::NoneAddressing),
 
         OpCode::new(0xe9, Instruction::Sbc, 2, 2, AddressingMode::Immediate),

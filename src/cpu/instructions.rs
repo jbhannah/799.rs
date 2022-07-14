@@ -172,7 +172,7 @@ where
             Instruction::Plp => self.plp(),
             Instruction::Rol => self.rol(addr), // handles None case to operate on accumulator
             Instruction::Ror => self.ror(addr), // handles None case to operate on accumulator
-            Instruction::Rti => todo!(),
+            Instruction::Rti => self.rti(),
             Instruction::Rts => self.rts(),
             Instruction::Sbc => self.with_operand(Self::sbc, addr),
             Instruction::Sec => self.sec(),

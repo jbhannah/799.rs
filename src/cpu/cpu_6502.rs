@@ -288,6 +288,21 @@ pub trait Cpu6502 {
     /// * N - set if the bit 7 of the new value is set.
     fn ror(&mut self, addr: Option<u16>);
 
+    /// Return from an interrupt by pulling the processor flags and program
+    /// counter from the stack.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set from stack.
+    /// * Z - set from stack.
+    /// * I - set from stack.
+    /// * D - set from stack.
+    /// * B - set from stack.
+    /// * B2 - set from stack.
+    /// * V - set from stack.
+    /// * N - set from stack.
+    fn rti(&mut self);
+
     /// Return from a subroutine by setting the program counter to the last
     /// value on the stack.
     fn rts(&mut self);

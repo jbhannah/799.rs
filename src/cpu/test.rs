@@ -435,3 +435,29 @@ fn test_0x28_plp() {
 
     assert_eq!(cpu.status.bits(), val);
 }
+
+#[test]
+fn test_0x40_rti() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x40, 0x00]);
+    cpu.reset();
+
+    let pc = 0xa000_u16;
+    cpu.stack_push(pc);
+
+    let status = 0xff_u8;
+    cpu.stack_push(status);
+
+    cpu.memory.write(pc, 0x00_u8);
+
+    cpu.run();
+
+    assert_eq!(cpu.stack_pop::<u8>(), status);
+    assert_eq!(cpu.stack_pop::<u16>(), pc + 1);
+    // assert_eq!(
+    //     cpu.memory
+    //         .read::<u16>(cpu.stack_pointer.wrapping_add(1).into()),
+    //     pc
+    // );
+    // assert_eq!(cpu.status.bits(), status);
+}
