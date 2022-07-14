@@ -334,6 +334,9 @@ pub trait Instructions {
     /// * N - set to bit 7 of the result.
     fn ldy(&mut self, addr: u16);
 
+    /// Performs no other operations.
+    fn nop(&self) {}
+
     /// Perform a bitwise or between the accumulator and the value at the given
     /// address, and store the result in the accumulator.
     ///

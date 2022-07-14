@@ -137,7 +137,7 @@ impl CPU {
                 Instruction::Ldx => self.with_operand(Self::ldx, addr),
                 Instruction::Ldy => self.with_operand(Self::ldy, addr),
                 Instruction::Lsr => todo!(),
-                Instruction::Nop => todo!(),
+                Instruction::Nop => self.nop(),
                 Instruction::Ora => self.with_operand(Self::ora, addr),
                 Instruction::Pha => todo!(),
                 Instruction::Php => todo!(),
