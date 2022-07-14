@@ -242,6 +242,34 @@ pub trait Cpu6502 {
     /// * N - set to bit 7 of the result.
     fn ora(&mut self, addr: u16);
 
+    /// Push the current accumulator value onto the stack.
+    fn pha(&mut self);
+
+    /// Push the current processor status onto the stack.
+    fn php(&mut self);
+
+    /// Pull the accumulator value from the stack.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * Z - set if the new value is 0.
+    /// * N - set to bit 7 of the new value.
+    fn pla(&mut self);
+
+    /// Pull the processor status from the stack.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set from stack.
+    /// * Z - set from stack.
+    /// * I - set from stack.
+    /// * D - set from stack.
+    /// * B - set from stack.
+    /// * B2 - set from stack.
+    /// * V - set from stack.
+    /// * N - set from stack.
+    fn plp(&mut self);
+
     /// Rotate the bits in the accumulator or at the given address one place to
     /// the left through the carry bit.
     ///

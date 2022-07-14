@@ -166,10 +166,10 @@ where
             Instruction::Lsr => self.lsr(addr), // handles None case to operate on accumulator
             Instruction::Nop => self.nop(),
             Instruction::Ora => self.with_operand(Self::ora, addr),
-            Instruction::Pha => todo!(),
-            Instruction::Php => todo!(),
-            Instruction::Pla => todo!(),
-            Instruction::Plp => todo!(),
+            Instruction::Pha => self.pha(),
+            Instruction::Php => self.php(),
+            Instruction::Pla => self.pla(),
+            Instruction::Plp => self.plp(),
             Instruction::Rol => self.rol(addr), // handles None case to operate on accumulator
             Instruction::Ror => self.ror(addr), // handles None case to operate on accumulator
             Instruction::Rti => todo!(),

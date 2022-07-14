@@ -378,3 +378,60 @@ fn test_0x4a_lsr_accumulator() {
     assert_eq!(cpu.accumulator, 0b0010_1010);
     assert!(cpu.status.contains(Status::Carry));
 }
+
+#[test]
+fn test_0x48_pha() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x48, 0x00]);
+    cpu.reset();
+
+    cpu.accumulator = 0x42;
+
+    cpu.run();
+
+    assert_eq!(
+        cpu.memory.read::<u8>(StackPointer::default().into()),
+        cpu.accumulator
+    );
+}
+
+#[test]
+fn test_0x08_php() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0x08, 0x00]);
+
+    assert_eq!(
+        cpu.memory.read::<u8>(StackPointer::default().into()),
+        cpu.status.bits()
+    );
+}
+
+#[test]
+fn test_0x68_pla() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x68, 0x00]);
+    cpu.reset();
+
+    let val = 0x42_u8;
+    assert_ne!(cpu.accumulator, val);
+
+    cpu.stack_push(val);
+    cpu.run();
+
+    assert_eq!(cpu.accumulator, val);
+}
+
+#[test]
+fn test_0x28_plp() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x28, 0x00]);
+    cpu.reset();
+
+    let val = 0xff_u8;
+    assert_ne!(cpu.status.bits(), val);
+
+    cpu.stack_push(val);
+    cpu.run();
+
+    assert_eq!(cpu.status.bits(), val);
+}

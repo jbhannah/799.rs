@@ -24,7 +24,8 @@ mod test;
 pub struct StackPointer(u8);
 
 impl Default for StackPointer {
-    /// Default the stack pointer to the first address of the stack in memory.
+    /// Default the stack pointer to the top of the stack address space in
+    /// memory.
     fn default() -> Self {
         Self(memory::STACK_RESET)
     }
@@ -448,6 +449,23 @@ impl Cpu6502 for CPU {
 
     fn ora(&mut self, addr: u16) {
         self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
+    }
+
+    fn pha(&mut self) {
+        self.stack_push(self.accumulator);
+    }
+
+    fn php(&mut self) {
+        self.stack_push(self.status.bits());
+    }
+
+    fn pla(&mut self) {
+        let value = self.stack_pop();
+        self.set_accumulator(value);
+    }
+
+    fn plp(&mut self) {
+        self.status = Status::from(self.stack_pop::<u8>());
     }
 
     fn rol(&mut self, addr: Option<u16>) {
