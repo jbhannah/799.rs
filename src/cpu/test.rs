@@ -19,7 +19,7 @@ fn test_0xa1_lda_indirect_x() {
     let addr: u16 = 0xbafc;
 
     cpu.memory.write((0x20 + cpu.index_x).into(), addr);
-    cpu.memory.write(addr, 0x42 as u8);
+    cpu.memory.write(addr, 0x42_u8);
 
     cpu.run();
 
@@ -37,7 +37,7 @@ fn test_0xb1_lda_indirect_y() {
     let addr: u16 = 0xbafc;
 
     cpu.memory.write(0x20, addr);
-    cpu.memory.write(addr + cpu.index_y as u16, 0x42 as u8);
+    cpu.memory.write(addr + u16::from(cpu.index_y), 0x42_u8);
 
     cpu.run();
 
@@ -55,7 +55,7 @@ fn test_0xa2_ldx_immediate() {
 #[test]
 fn test_0xa5_lda_zero_page() {
     let mut cpu = CPU::new();
-    cpu.memory.write(0x10, 0x55 as u8);
+    cpu.memory.write(0x10, 0x55_u8);
     cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
 
     assert_eq!(cpu.accumulator, 0x55);
@@ -110,7 +110,7 @@ fn test_0xa8_tay() {
 #[test]
 fn test_0xe6_inc_zero_page() {
     let mut cpu = CPU::new();
-    cpu.memory.write(0x10, 0x55 as u8);
+    cpu.memory.write(0x10, 0x55_u8);
     cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
 
     assert_eq!(cpu.memory.read::<u8>(0x10), 0x56);
@@ -141,7 +141,7 @@ fn test_0xe8_iny_overflow() {
 #[test]
 fn test_0x18_clc() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status | Status::Carry;
+    cpu.status |= Status::Carry;
     cpu.load_and_run(vec![0x18, 0x00]);
 
     assert!(!cpu.status.contains(Status::Carry));
@@ -150,7 +150,7 @@ fn test_0x18_clc() {
 #[test]
 fn test_0xd8_cld() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status | Status::Decimal;
+    cpu.status |= Status::Decimal;
     cpu.load_and_run(vec![0xd8, 0x00]);
 
     assert!(!cpu.status.contains(Status::Decimal));
@@ -159,7 +159,7 @@ fn test_0xd8_cld() {
 #[test]
 fn test_0x58_cli() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status | Status::InterruptDisable;
+    cpu.status |= Status::InterruptDisable;
     cpu.load_and_run(vec![0x58, 0x00]);
 
     assert!(!cpu.status.contains(Status::InterruptDisable));
@@ -168,7 +168,7 @@ fn test_0x58_cli() {
 #[test]
 fn test_0xb8_clv() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status | Status::Overflow;
+    cpu.status |= Status::Overflow;
     cpu.load_and_run(vec![0xb8, 0x00]);
 
     assert!(!cpu.status.contains(Status::Overflow));
@@ -177,7 +177,7 @@ fn test_0xb8_clv() {
 #[test]
 fn test_0x38_sec() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status & Status::Carry.not();
+    cpu.status &= Status::Carry.not();
     cpu.load_and_run(vec![0x38, 0x00]);
 
     assert!(cpu.status.contains(Status::Carry));
@@ -186,7 +186,7 @@ fn test_0x38_sec() {
 #[test]
 fn test_0xf8_sed() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status & Status::Decimal.not();
+    cpu.status &= Status::Decimal.not();
     cpu.load_and_run(vec![0xf8, 0x00]);
 
     assert!(cpu.status.contains(Status::Decimal));
@@ -195,7 +195,7 @@ fn test_0xf8_sed() {
 #[test]
 fn test_0x78_sei() {
     let mut cpu = CPU::new();
-    cpu.status = cpu.status & Status::InterruptDisable.not();
+    cpu.status &= Status::InterruptDisable.not();
     cpu.load_and_run(vec![0x78, 0x00]);
 
     assert!(cpu.status.contains(Status::InterruptDisable));
@@ -287,7 +287,7 @@ fn test_0x06_asl() {
 #[test]
 fn test_0xc6_dec_absolute() {
     let mut cpu = CPU::new();
-    cpu.memory.write(0x1010, 0x42 as u8);
+    cpu.memory.write(0x1010, 0x42_u8);
     cpu.load_and_run(vec![0xce, 0x10, 0x10, 0x00]);
 
     assert_eq!(cpu.memory.read::<u8>(0x1010), 0x41);
@@ -339,8 +339,8 @@ fn test_0x6c_jmp_indirect() {
     let addr: u16 = 0xbafc;
 
     cpu.memory.write(0x0120, addr); // set the value at $0120 and $0121 to the address of the next instruction
-    cpu.memory.write(addr, 0x42a9 as u16); // load 0x42 into the accumulator (0xa9, 0x42 stored little-endian)
-    cpu.memory.write(addr + 2, 0x00 as u8);
+    cpu.memory.write(addr, 0x42a9_u16); // load 0x42 into the accumulator (0xa9, 0x42 stored little-endian)
+    cpu.memory.write(addr + 2, 0x00_u8);
 
     cpu.load_and_run(vec![0x6c, 0x20, 0x01, 0x00]);
 

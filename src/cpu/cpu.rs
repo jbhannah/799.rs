@@ -8,13 +8,8 @@ use super::{
 impl CPU {
     /// Add the given value to the accumulator.
     fn add_to_accumulator(&mut self, value: u8) {
-        let sum = self.accumulator as u16
-            + value as u16
-            + (if self.status.contains(Status::Carry) {
-                1
-            } else {
-                0
-            }) as u16;
+        let sum =
+            u16::from(self.accumulator + value) + u16::from(self.status.contains(Status::Carry));
 
         self.status.set_carry(sum);
 

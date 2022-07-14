@@ -1,3 +1,11 @@
+#![deny(
+    clippy::cast_lossless,
+    clippy::cast_ptr_alignment,
+    clippy::char_lit_as_u8,
+    clippy::checked_conversions,
+    clippy::unnecessary_cast
+)]
+
 use cpu::mode::Mode;
 
 use crate::cpu::CPU;

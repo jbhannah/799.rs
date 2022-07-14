@@ -109,7 +109,7 @@ mod test {
     #[test]
     fn test_write_u8() {
         let mut memory = Memory::default();
-        memory.write(0xBEEF, 0x42 as u8);
+        memory.write(0xBEEF, 0x42_u8);
 
         assert_eq!(memory.0[0xBEEF], 0x42);
     }
@@ -119,7 +119,7 @@ mod test {
         let mut memory = Memory::default();
         let addr = 0xBEEF;
 
-        memory.write(addr, 0x4342 as u16);
+        memory.write(addr, 0x4342_u16);
 
         assert_eq!(memory.0[addr as usize], 0x42);
         assert_eq!(memory.0[addr as usize + 1], 0x43);

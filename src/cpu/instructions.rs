@@ -1,117 +1,117 @@
 #[derive(Debug)]
 pub enum Instruction {
     /// ADd with Carry
-    ADC,
+    Adc,
     /// logical AND
-    AND,
+    And,
     /// Arithmetic Shift Left
-    ASL,
+    Asl,
     /// Branch if Carry Clear
-    BCC,
+    Bcc,
     /// Branch if Carry Set
-    BCS,
+    Bcs,
     /// Branch if EQual
-    BEQ,
+    Beq,
     /// BIT test
-    BIT,
+    Bit,
     /// Branch if MInus
-    BMI,
+    Bmi,
     /// Branch if Not Equal
-    BNE,
+    Bne,
     /// Branch if PLus
-    BPL,
+    Bpl,
     /// BReaK (force interrupt)
-    BRK,
+    Brk,
     /// Branch if oVerflow Clear
-    BVC,
+    Bvc,
     /// Branch if oVerflow Set
-    BVS,
+    Bvs,
     /// CLear Carry flag
-    CLC,
+    Clc,
     /// CLear Decimal flag
-    CLD,
+    Cld,
     /// CLear Interrupt disable flag
-    CLI,
+    Cli,
     /// CLear oVerflow flag
-    CLV,
+    Clv,
     /// CoMPare
-    CMP,
+    Cmp,
     /// ComPare X register
-    CPX,
+    Cpx,
     /// ComPare Y register
-    CPY,
+    Cpy,
     /// DECrecment memory
-    DEC,
+    Dec,
     /// DEcrement X register
-    DEX,
+    Dex,
     /// DEcrement Y register
-    DEY,
+    Dey,
     /// Exclusive OR
-    EOR,
+    Eor,
     /// INCrement memory
-    INC,
+    Inc,
     /// INcrement X register
-    INX,
+    Inx,
     /// INcrement Y register
-    INY,
+    Iny,
     /// JuMP
-    JMP,
+    Jmp,
     /// Jump to SubRoutine
-    JSR,
+    Jsr,
     /// LoaD Accumulator
-    LDA,
+    Lda,
     /// LoaD X register
-    LDX,
+    Ldx,
     /// LoaD Y register
-    LDY,
+    Ldy,
     /// Logical Shift Right
-    LSR,
+    Lsr,
     /// No OPeration
-    NOP,
+    Nop,
     /// logical inclusive OR on Accumulator
-    ORA,
+    Ora,
     /// PusH Accumulator
-    PHA,
+    Pha,
     /// PusH Processor status
-    PHP,
+    Php,
     /// PuLl Accumulator
-    PLA,
+    Pla,
     /// PuLl Processor status
-    PLP,
+    Plp,
     /// ROtate Left
-    ROL,
+    Rol,
     /// ROtate Right
-    ROR,
+    Ror,
     /// ReTurn from Interrupt
-    RTI,
+    Rti,
     /// ReTurn from Subroutine
-    RTS,
+    Rts,
     /// SuBtract with Carry
-    SBC,
+    Sbc,
     /// SEt Carry flag
-    SEC,
+    Sec,
     /// SEt Decimal flag
-    SED,
+    Sed,
     /// SEt Interrupt disable flag
-    SEI,
+    Sei,
     /// STore Accumulator
-    STA,
+    Sta,
     /// STore X register
-    STX,
+    Stx,
     /// STore Y register
-    STY,
+    Sty,
     /// Transfer Accumulator to X register
-    TAX,
+    Tax,
     /// Transfer Accumulator to Y register
-    TAY,
+    Tay,
     /// Transfer Stack pointer to X register
-    TSX,
+    Tsx,
     /// Transfer X to Accumulator
-    TXA,
+    Txa,
     /// Transfer X to Stack pointer
-    TXS,
+    Txs,
     /// Transfer Y to Accumulator
-    TYA,
+    Tya,
 }
 
 pub trait Instructions {

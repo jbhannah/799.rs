@@ -29,22 +29,22 @@ impl Default for StackPointer {
     }
 }
 
-impl Into<u8> for StackPointer {
-    fn into(self) -> u8 {
-        self.0
+impl From<StackPointer> for u8 {
+    fn from(s: StackPointer) -> Self {
+        s.0
     }
 }
 
-impl Into<u16> for StackPointer {
-    fn into(self) -> u16 {
-        self.0 as u16
+impl From<StackPointer> for u16 {
+    fn from(s: StackPointer) -> Self {
+        s.0.into()
     }
 }
 
 impl StackPointer {
     /// Advance the stack pointer to the first unoccupied space in the stack.
     pub fn advance(&mut self, offset: i16) {
-        self.0 = (self.0 as i16 + offset) as u8;
+        self.0 = (i16::from(self.0) + offset) as u8;
     }
 }
 
@@ -92,74 +92,74 @@ impl CPU {
 
     /// Read and execute each instruction in the program.
     pub fn run(&mut self) {
-        let ref opcodes = *opcodes::OPCODES_MAP;
+        let opcodes = &(*opcodes::OPCODES_MAP);
 
         loop {
             let code: u8 = self.read_program_counter();
 
             let opcode = opcodes
                 .get(&code)
-                .expect(&format!("Opcode {:x} is not recognized", code));
+                .unwrap_or_else(|| panic!("Opcode {:x} is not recognized", code));
 
             let addr = self.get_operand_address(&opcode.mode);
 
             match opcode.instruction {
-                Instruction::ADC => self.with_operand(Self::adc, addr),
-                Instruction::AND => self.with_operand(Self::and, addr),
-                Instruction::ASL => self.asl(addr), // handles None case to operate on accumulator
-                Instruction::BCC => self.with_operand(Self::bcc, addr),
-                Instruction::BCS => self.with_operand(Self::bcs, addr),
-                Instruction::BEQ => self.with_operand(Self::beq, addr),
-                Instruction::BIT => self.with_operand(Self::bit, addr),
-                Instruction::BMI => self.with_operand(Self::bmi, addr),
-                Instruction::BNE => self.with_operand(Self::bne, addr),
-                Instruction::BPL => self.with_operand(Self::bpl, addr),
-                Instruction::BRK => self.brk(),
-                Instruction::BVC => self.with_operand(Self::bvc, addr),
-                Instruction::BVS => self.with_operand(Self::bvs, addr),
-                Instruction::CLC => self.clc(),
-                Instruction::CLD => self.cld(),
-                Instruction::CLI => self.cli(),
-                Instruction::CLV => self.clv(),
-                Instruction::CMP => self.with_operand(Self::cmp, addr),
-                Instruction::CPX => self.with_operand(Self::cpx, addr),
-                Instruction::CPY => self.with_operand(Self::cpy, addr),
-                Instruction::DEC => self.with_operand(Self::dec, addr),
-                Instruction::DEX => self.dex(),
-                Instruction::DEY => self.dey(),
-                Instruction::EOR => self.with_operand(Self::eor, addr),
-                Instruction::INC => self.with_operand(Self::inc, addr),
-                Instruction::INX => self.inx(),
-                Instruction::INY => self.iny(),
-                Instruction::JMP => self.with_operand(Self::jmp, addr),
-                Instruction::JSR => self.with_operand(Self::jsr, addr),
-                Instruction::LDA => self.with_operand(Self::lda, addr),
-                Instruction::LDX => self.with_operand(Self::ldx, addr),
-                Instruction::LDY => self.with_operand(Self::ldy, addr),
-                Instruction::LSR => todo!(),
-                Instruction::NOP => todo!(),
-                Instruction::ORA => self.with_operand(Self::ora, addr),
-                Instruction::PHA => todo!(),
-                Instruction::PHP => todo!(),
-                Instruction::PLA => todo!(),
-                Instruction::PLP => todo!(),
-                Instruction::ROL => self.rol(addr), // handles None case to operate on accumulator
-                Instruction::ROR => self.ror(addr), // handles None case to operate on accumulator
-                Instruction::RTI => todo!(),
-                Instruction::RTS => self.rts(),
-                Instruction::SBC => self.with_operand(Self::sbc, addr),
-                Instruction::SEC => self.sec(),
-                Instruction::SED => self.sed(),
-                Instruction::SEI => self.sei(),
-                Instruction::STA => self.with_operand(Self::sta, addr),
-                Instruction::STX => self.with_operand(Self::stx, addr),
-                Instruction::STY => self.with_operand(Self::sty, addr),
-                Instruction::TAX => self.tax(),
-                Instruction::TAY => self.tay(),
-                Instruction::TSX => self.tsx(),
-                Instruction::TXA => self.txa(),
-                Instruction::TXS => self.txs(),
-                Instruction::TYA => self.tya(),
+                Instruction::Adc => self.with_operand(Self::adc, addr),
+                Instruction::And => self.with_operand(Self::and, addr),
+                Instruction::Asl => self.asl(addr), // handles None case to operate on accumulator
+                Instruction::Bcc => self.with_operand(Self::bcc, addr),
+                Instruction::Bcs => self.with_operand(Self::bcs, addr),
+                Instruction::Beq => self.with_operand(Self::beq, addr),
+                Instruction::Bit => self.with_operand(Self::bit, addr),
+                Instruction::Bmi => self.with_operand(Self::bmi, addr),
+                Instruction::Bne => self.with_operand(Self::bne, addr),
+                Instruction::Bpl => self.with_operand(Self::bpl, addr),
+                Instruction::Brk => self.brk(),
+                Instruction::Bvc => self.with_operand(Self::bvc, addr),
+                Instruction::Bvs => self.with_operand(Self::bvs, addr),
+                Instruction::Clc => self.clc(),
+                Instruction::Cld => self.cld(),
+                Instruction::Cli => self.cli(),
+                Instruction::Clv => self.clv(),
+                Instruction::Cmp => self.with_operand(Self::cmp, addr),
+                Instruction::Cpx => self.with_operand(Self::cpx, addr),
+                Instruction::Cpy => self.with_operand(Self::cpy, addr),
+                Instruction::Dec => self.with_operand(Self::dec, addr),
+                Instruction::Dex => self.dex(),
+                Instruction::Dey => self.dey(),
+                Instruction::Eor => self.with_operand(Self::eor, addr),
+                Instruction::Inc => self.with_operand(Self::inc, addr),
+                Instruction::Inx => self.inx(),
+                Instruction::Iny => self.iny(),
+                Instruction::Jmp => self.with_operand(Self::jmp, addr),
+                Instruction::Jsr => self.with_operand(Self::jsr, addr),
+                Instruction::Lda => self.with_operand(Self::lda, addr),
+                Instruction::Ldx => self.with_operand(Self::ldx, addr),
+                Instruction::Ldy => self.with_operand(Self::ldy, addr),
+                Instruction::Lsr => todo!(),
+                Instruction::Nop => todo!(),
+                Instruction::Ora => self.with_operand(Self::ora, addr),
+                Instruction::Pha => todo!(),
+                Instruction::Php => todo!(),
+                Instruction::Pla => todo!(),
+                Instruction::Plp => todo!(),
+                Instruction::Rol => self.rol(addr), // handles None case to operate on accumulator
+                Instruction::Ror => self.ror(addr), // handles None case to operate on accumulator
+                Instruction::Rti => todo!(),
+                Instruction::Rts => self.rts(),
+                Instruction::Sbc => self.with_operand(Self::sbc, addr),
+                Instruction::Sec => self.sec(),
+                Instruction::Sed => self.sed(),
+                Instruction::Sei => self.sei(),
+                Instruction::Sta => self.with_operand(Self::sta, addr),
+                Instruction::Stx => self.with_operand(Self::stx, addr),
+                Instruction::Sty => self.with_operand(Self::sty, addr),
+                Instruction::Tax => self.tax(),
+                Instruction::Tay => self.tay(),
+                Instruction::Tsx => self.tsx(),
+                Instruction::Txa => self.txa(),
+                Instruction::Txs => self.txs(),
+                Instruction::Tya => self.tya(),
             }
 
             // Break if the program counter is empty.
@@ -180,22 +180,26 @@ impl CPU {
                 pc
             }
 
-            AddressingMode::ZeroPage => Some(self.read_program_counter::<u8>() as u16),
-            AddressingMode::ZeroPageX => {
-                Some(self.read_program_counter::<u8>().wrapping_add(self.index_x) as u16)
-            }
-            AddressingMode::ZeroPageY => {
-                Some(self.read_program_counter::<u8>().wrapping_add(self.index_y) as u16)
-            }
+            AddressingMode::ZeroPage => Some(self.read_program_counter::<u8>().into()),
+            AddressingMode::ZeroPageX => Some(
+                self.read_program_counter::<u8>()
+                    .wrapping_add(self.index_x)
+                    .into(),
+            ),
+            AddressingMode::ZeroPageY => Some(
+                self.read_program_counter::<u8>()
+                    .wrapping_add(self.index_y)
+                    .into(),
+            ),
 
             AddressingMode::Absolute => Some(self.read_program_counter::<u16>()),
             AddressingMode::AbsoluteX => Some(
                 self.read_program_counter::<u16>()
-                    .wrapping_add(self.index_x as u16),
+                    .wrapping_add(self.index_x.into()),
             ),
             AddressingMode::AbsoluteY => Some(
                 self.read_program_counter::<u16>()
-                    .wrapping_add(self.index_y as u16),
+                    .wrapping_add(self.index_y.into()),
             ),
 
             AddressingMode::Indirect => {
