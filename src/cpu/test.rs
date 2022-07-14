@@ -346,3 +346,17 @@ fn test_0x6c_jmp_indirect() {
 
     assert_eq!(cpu.accumulator, 0x42);
 }
+
+#[test]
+fn test_0x4a_lsr_accumulator() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x4a, 0x00]);
+    cpu.reset();
+
+    cpu.accumulator = 0b0101_0101;
+
+    cpu.run();
+
+    assert_eq!(cpu.accumulator, 0b0010_1010);
+    assert!(cpu.status.contains(Status::Carry));
+}

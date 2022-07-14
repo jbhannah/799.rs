@@ -163,7 +163,7 @@ where
             Instruction::Lda => self.with_operand(Self::lda, addr),
             Instruction::Ldx => self.with_operand(Self::ldx, addr),
             Instruction::Ldy => self.with_operand(Self::ldy, addr),
-            Instruction::Lsr => todo!(),
+            Instruction::Lsr => self.lsr(addr), // handles None case to operate on accumulator
             Instruction::Nop => self.nop(),
             Instruction::Ora => self.with_operand(Self::ora, addr),
             Instruction::Pha => todo!(),

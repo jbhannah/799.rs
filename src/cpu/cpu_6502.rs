@@ -219,6 +219,17 @@ pub trait Cpu6502 {
     /// * N - set to bit 7 of the result.
     fn ldy(&mut self, addr: u16);
 
+    /// Shift the bits in the accumulator or at the given address one place to
+    /// the right, setting the carry bit to bit 0 of the initial value and bit 7
+    /// of the new value to 0.
+    ///
+    /// Processor status bits affected:
+    ///
+    /// * C - set to bit 0 of the initial value.
+    /// * Z - set if the result is 0.
+    /// * N - set if bit 7 of the new value is set (always 0).
+    fn lsr(&mut self, addr: Option<u16>);
+
     /// Performs no other operations.
     fn nop(&self) {}
 

@@ -419,6 +419,23 @@ impl Cpu6502 for CPU {
         self.set_index_y(self.memory.read(addr));
     }
 
+    fn lsr(&mut self, addr: Option<u16>) {
+        let initial = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = initial >> 1;
+
+        self.status.set(Status::Carry, initial % 2 == 1);
+        self.set_status_negative_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        }
+    }
+
     fn ora(&mut self, addr: u16) {
         self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
     }
