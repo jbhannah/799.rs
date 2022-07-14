@@ -204,12 +204,13 @@ impl CPU {
                 Some(self.memory.read(addr))
             }
             AddressingMode::IndirectX => {
-                let ptr = self.read_program_counter::<u8>().wrapping_add(self.index_x);
-                Some(self.read_indirect(ptr))
+                let ptr: u8 = self.read_program_counter();
+                Some(self.memory.read(ptr.wrapping_add(self.index_x).into()))
             }
             AddressingMode::IndirectY => {
                 let ptr: u8 = self.read_program_counter();
-                Some(self.read_indirect(ptr).wrapping_add(self.index_y as u16))
+                let addr: u16 = self.memory.read(ptr.into());
+                Some(addr.wrapping_add(self.index_y.into()))
             }
 
             AddressingMode::Relative => {
@@ -219,12 +220,6 @@ impl CPU {
 
             AddressingMode::NoneAddressing => None,
         }
-    }
-
-    fn read_indirect(&self, ptr: u8) -> u16 {
-        let lo: u8 = self.memory.read(ptr as u16);
-        let hi: u8 = self.memory.read(ptr.wrapping_add(1) as u16);
-        (hi as u16) << 8 | (lo as u16)
     }
 
     /// Read the value at the address of the program counter, and increment the

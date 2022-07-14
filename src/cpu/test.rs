@@ -9,6 +9,42 @@ fn test_0xa0_ldy_immediate() {
 }
 
 #[test]
+fn test_0xa1_lda_indirect_x() {
+    let mut cpu = CPU::new();
+
+    cpu.load(vec![0xa1, 0x20, 0x00]);
+    cpu.reset();
+
+    cpu.index_x = 0x10;
+    let addr: u16 = 0xbafc;
+
+    cpu.memory.write((0x20 + cpu.index_x).into(), addr);
+    cpu.memory.write(addr, 0x42 as u8);
+
+    cpu.run();
+
+    assert_eq!(cpu.accumulator, 0x42);
+}
+
+#[test]
+fn test_0xb1_lda_indirect_y() {
+    let mut cpu = CPU::new();
+
+    cpu.load(vec![0xb1, 0x20, 0x00]);
+    cpu.reset();
+
+    cpu.index_y = 0x10;
+    let addr: u16 = 0xbafc;
+
+    cpu.memory.write(0x20, addr);
+    cpu.memory.write(addr + cpu.index_y as u16, 0x42 as u8);
+
+    cpu.run();
+
+    assert_eq!(cpu.accumulator, 0x42);
+}
+
+#[test]
 fn test_0xa2_ldx_immediate() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa2, 0x05, 0x00]);
