@@ -8,7 +8,7 @@ use self::{
     status::Status,
 };
 
-mod cpu;
+mod cpu_2a03;
 mod instructions;
 mod memory;
 pub mod mode;
