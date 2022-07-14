@@ -1,14 +1,15 @@
 use std::fmt::LowerHex;
 
 use self::{
-    instructions::{Instruction, Instructions},
+    cpu_6502::Cpu6502,
+    instructions::Instructions,
     memory::{Memory, MemoryValue},
     mode::Mode,
     opcodes::AddressingMode,
     status::Status,
 };
 
-mod cpu_2a03;
+mod cpu_6502;
 mod instructions;
 mod memory;
 pub mod mode;
@@ -102,65 +103,7 @@ impl CPU {
                 .unwrap_or_else(|| panic!("Opcode {:x} is not recognized", code));
 
             let addr = self.get_operand_address(&opcode.mode);
-
-            match opcode.instruction {
-                Instruction::Adc => self.with_operand(Self::adc, addr),
-                Instruction::And => self.with_operand(Self::and, addr),
-                Instruction::Asl => self.asl(addr), // handles None case to operate on accumulator
-                Instruction::Bcc => self.with_operand(Self::bcc, addr),
-                Instruction::Bcs => self.with_operand(Self::bcs, addr),
-                Instruction::Beq => self.with_operand(Self::beq, addr),
-                Instruction::Bit => self.with_operand(Self::bit, addr),
-                Instruction::Bmi => self.with_operand(Self::bmi, addr),
-                Instruction::Bne => self.with_operand(Self::bne, addr),
-                Instruction::Bpl => self.with_operand(Self::bpl, addr),
-                Instruction::Brk => self.brk(),
-                Instruction::Bvc => self.with_operand(Self::bvc, addr),
-                Instruction::Bvs => self.with_operand(Self::bvs, addr),
-                Instruction::Clc => self.clc(),
-                Instruction::Cld => self.cld(),
-                Instruction::Cli => self.cli(),
-                Instruction::Clv => self.clv(),
-                Instruction::Cmp => self.with_operand(Self::cmp, addr),
-                Instruction::Cpx => self.with_operand(Self::cpx, addr),
-                Instruction::Cpy => self.with_operand(Self::cpy, addr),
-                Instruction::Dec => self.with_operand(Self::dec, addr),
-                Instruction::Dex => self.dex(),
-                Instruction::Dey => self.dey(),
-                Instruction::Eor => self.with_operand(Self::eor, addr),
-                Instruction::Inc => self.with_operand(Self::inc, addr),
-                Instruction::Inx => self.inx(),
-                Instruction::Iny => self.iny(),
-                Instruction::Jmp => self.with_operand(Self::jmp, addr),
-                Instruction::Jsr => self.with_operand(Self::jsr, addr),
-                Instruction::Lda => self.with_operand(Self::lda, addr),
-                Instruction::Ldx => self.with_operand(Self::ldx, addr),
-                Instruction::Ldy => self.with_operand(Self::ldy, addr),
-                Instruction::Lsr => todo!(),
-                Instruction::Nop => self.nop(),
-                Instruction::Ora => self.with_operand(Self::ora, addr),
-                Instruction::Pha => todo!(),
-                Instruction::Php => todo!(),
-                Instruction::Pla => todo!(),
-                Instruction::Plp => todo!(),
-                Instruction::Rol => self.rol(addr), // handles None case to operate on accumulator
-                Instruction::Ror => self.ror(addr), // handles None case to operate on accumulator
-                Instruction::Rti => todo!(),
-                Instruction::Rts => self.rts(),
-                Instruction::Sbc => self.with_operand(Self::sbc, addr),
-                Instruction::Sec => self.sec(),
-                Instruction::Sed => self.sed(),
-                Instruction::Sei => self.sei(),
-                Instruction::Sta => self.with_operand(Self::sta, addr),
-                Instruction::Stx => self.with_operand(Self::stx, addr),
-                Instruction::Sty => self.with_operand(Self::sty, addr),
-                Instruction::Tax => self.tax(),
-                Instruction::Tay => self.tay(),
-                Instruction::Tsx => self.tsx(),
-                Instruction::Txa => self.txa(),
-                Instruction::Txs => self.txs(),
-                Instruction::Tya => self.tya(),
-            }
+            self.call(&opcode.instruction, addr);
 
             // Break if the program counter is empty.
             if self.program_counter == 0 {
@@ -236,12 +179,341 @@ impl CPU {
         val
     }
 
-    /// Call the given callback that requires an operand and panic if the operand
-    /// is missing.
-    fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
-    where
-        CB: Fn(&mut Self, u16),
-    {
-        callback(self, addr.expect("Required operand is missing"))
+    /// Add the given value to the accumulator.
+    fn add_to_accumulator(&mut self, value: u8) {
+        let sum =
+            u16::from(self.accumulator + value) + u16::from(self.status.contains(Status::Carry));
+
+        self.status.set_carry(sum);
+
+        let result = sum as u8;
+        self.status
+            .set_overflow((value ^ result) & (result ^ self.accumulator) & 0x80 != 0);
+
+        self.set_accumulator(result);
+    }
+
+    /// If the condition is met, add the relative displacement to the program
+    /// counter to branch to a new location.
+    fn branch(&mut self, displacement: u16, condition: bool) {
+        if condition {
+            self.program_counter += displacement;
+        }
+    }
+
+    /// Compare the given value to the value at the given address, and set the
+    /// carry, zero, and negative flags accordingly.
+    fn compare(&mut self, value: u8, addr: u16) {
+        let rhs: u8 = self.memory.read(addr);
+        let result = value.wrapping_sub(rhs);
+
+        self.status.set(Status::Carry, value >= rhs);
+        self.status.set_zero(result);
+        self.status.set_negative(result);
+    }
+
+    /// Set the accumulator to the given value and update the negative and zero
+    /// status bits.
+    fn set_accumulator(&mut self, value: u8) {
+        self.accumulator = value;
+        self.set_status_negative_zero(value)
+    }
+
+    /// Set the X register to the given value and update the negative and zero
+    /// status bits.
+    fn set_index_x(&mut self, value: u8) {
+        self.index_x = value;
+        self.set_status_negative_zero(value)
+    }
+
+    /// Set the Y register to the given value and update the negative and zero
+    /// status bits.
+    fn set_index_y(&mut self, value: u8) {
+        self.index_y = value;
+        self.set_status_negative_zero(value)
+    }
+
+    /// Set the negative and zero status bits accordingly for the given value.
+    fn set_status_negative_zero(&mut self, value: u8) {
+        self.status.set_negative(value);
+        self.status.set_zero(value);
+    }
+
+    /// Pop a value off of the stack and advance the stack pointer in reverse.
+    /// TODO: prevent pop on empty stack
+    /// TODO: reset popped addresses to 0
+    fn stack_pop<T: MemoryValue>(&mut self) -> T {
+        self.stack_pointer.advance(T::BITS as i16 / -8);
+        let val: T = self.memory.read(self.stack_pointer.into());
+        val
+    }
+
+    /// Push a value onto the stack and advance the stack pointer.
+    /// TODO: prevent push past limit of stack
+    fn stack_push<T: MemoryValue>(&mut self, value: T) {
+        self.memory.write(self.stack_pointer.into(), value);
+        self.stack_pointer.advance(T::BITS as i16 / 8);
+    }
+}
+
+impl Cpu6502 for CPU {
+    fn adc(&mut self, addr: u16) {
+        self.add_to_accumulator(self.memory.read(addr));
+    }
+
+    fn and(&mut self, addr: u16) {
+        self.set_accumulator(self.accumulator & self.memory.read::<u8>(addr));
+    }
+
+    fn asl(&mut self, addr: Option<u16>) {
+        let value = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = value << 1;
+
+        self.status.set(Status::Carry, value >> 7 == 1);
+        self.set_status_negative_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        };
+    }
+
+    fn bcc(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Carry));
+    }
+
+    fn bcs(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Carry));
+    }
+
+    fn beq(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Zero));
+    }
+
+    fn bit(&mut self, addr: u16) {
+        let value: u8 = self.memory.read(addr);
+
+        self.status.set_zero(self.accumulator & value);
+        self.status.set_overflow(value & 0b0100_0000 != 0);
+        self.status.set_negative(value);
+    }
+
+    fn bmi(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Negative));
+    }
+
+    fn bne(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Zero));
+    }
+
+    fn bpl(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Negative));
+    }
+
+    fn brk(&mut self) {
+        self.stack_push(self.program_counter);
+        self.stack_push(self.status.bits());
+
+        self.program_counter = self.memory.read(memory::INTERRUPT);
+
+        self.status.set(Status::Break, true);
+        self.status.set(Status::Break2, true);
+    }
+
+    fn bvc(&mut self, displacement: u16) {
+        self.branch(displacement, !self.status.contains(Status::Overflow));
+    }
+
+    fn bvs(&mut self, displacement: u16) {
+        self.branch(displacement, self.status.contains(Status::Overflow));
+    }
+
+    fn clc(&mut self) {
+        self.status.set(Status::Carry, false);
+    }
+
+    fn cld(&mut self) {
+        self.status.set(Status::Decimal, false);
+    }
+
+    fn cli(&mut self) {
+        self.status.set(Status::InterruptDisable, false);
+    }
+
+    fn clv(&mut self) {
+        self.status.set(Status::Overflow, false);
+    }
+
+    fn cmp(&mut self, addr: u16) {
+        self.compare(self.accumulator, addr);
+    }
+
+    fn cpx(&mut self, addr: u16) {
+        self.compare(self.index_x, addr);
+    }
+
+    fn cpy(&mut self, addr: u16) {
+        self.compare(self.index_y, addr);
+    }
+
+    fn dec(&mut self, addr: u16) {
+        let value: u8 = self.memory.read(addr);
+        let result = value.wrapping_sub(1);
+
+        self.memory.write(addr, result);
+
+        self.set_status_negative_zero(result);
+    }
+
+    fn dex(&mut self) {
+        self.set_index_x(self.index_x.wrapping_sub(1));
+    }
+
+    fn dey(&mut self) {
+        self.set_index_y(self.index_y.wrapping_sub(1));
+    }
+
+    fn eor(&mut self, addr: u16) {
+        self.set_accumulator(self.accumulator ^ self.memory.read::<u8>(addr));
+    }
+
+    fn inc(&mut self, addr: u16) {
+        let value: u8 = self.memory.read(addr);
+        let result = value.wrapping_add(1);
+
+        self.memory.write(addr, result);
+
+        self.set_status_negative_zero(result);
+    }
+
+    fn inx(&mut self) {
+        self.set_index_x(self.index_x.wrapping_add(1));
+    }
+
+    fn iny(&mut self) {
+        self.set_index_y(self.index_y.wrapping_add(1));
+    }
+
+    fn jmp(&mut self, addr: u16) {
+        self.program_counter = addr;
+    }
+
+    fn jsr(&mut self, addr: u16) {
+        self.stack_push(self.program_counter + 1);
+        self.program_counter = addr;
+    }
+
+    fn lda(&mut self, addr: u16) {
+        self.set_accumulator(self.memory.read(addr));
+    }
+
+    fn ldx(&mut self, addr: u16) {
+        self.set_index_x(self.memory.read(addr));
+    }
+
+    fn ldy(&mut self, addr: u16) {
+        self.set_index_y(self.memory.read(addr));
+    }
+
+    fn ora(&mut self, addr: u16) {
+        self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
+    }
+
+    fn rol(&mut self, addr: Option<u16>) {
+        let initial = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = (initial << 1) | self.status.and(Status::Carry).bits();
+
+        self.status.set(Status::Carry, initial >> 7 == 1);
+        self.set_status_negative_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        };
+    }
+
+    fn ror(&mut self, addr: Option<u16>) {
+        let initial = match addr {
+            Some(addr) => self.memory.read(addr),
+            None => self.accumulator,
+        };
+
+        let result = (initial >> 1) | (self.status.and(Status::Carry).bits() << 7);
+
+        self.status.set(Status::Carry, initial & 1 == 1);
+        self.set_status_negative_zero(result);
+
+        match addr {
+            Some(addr) => self.memory.write(addr, result),
+            None => self.accumulator = result,
+        };
+    }
+
+    fn rts(&mut self) {
+        self.program_counter = self.stack_pop();
+    }
+
+    fn sbc(&mut self, addr: u16) {
+        self.add_to_accumulator(
+            (self.memory.read::<u8>(addr) as i8)
+                .wrapping_neg()
+                .wrapping_sub(1) as u8,
+        );
+    }
+
+    fn sec(&mut self) {
+        self.status.set(Status::Carry, true);
+    }
+
+    fn sed(&mut self) {
+        self.status.set(Status::Decimal, true);
+    }
+
+    fn sei(&mut self) {
+        self.status.set(Status::InterruptDisable, true);
+    }
+
+    fn sta(&mut self, addr: u16) {
+        self.memory.write(addr, self.accumulator);
+    }
+
+    fn stx(&mut self, addr: u16) {
+        self.memory.write(addr, self.index_x);
+    }
+
+    fn sty(&mut self, addr: u16) {
+        self.memory.write(addr, self.index_y);
+    }
+
+    fn tax(&mut self) {
+        self.set_index_x(self.accumulator);
+    }
+
+    fn tay(&mut self) {
+        self.set_index_y(self.accumulator);
+    }
+
+    fn tsx(&mut self) {
+        self.set_index_x(self.stack_pointer.into());
+    }
+
+    fn txa(&mut self) {
+        self.set_accumulator(self.index_x);
+    }
+
+    fn txs(&mut self) {
+        self.stack_pointer = StackPointer(self.index_x);
+    }
+
+    fn tya(&mut self) {
+        self.set_accumulator(self.index_y);
     }
 }

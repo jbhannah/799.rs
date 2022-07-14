@@ -1,3 +1,6 @@
+use super::cpu_6502::Cpu6502;
+
+/// Values representing each discrete instruction supported by the 6502 CPU.
 #[derive(Debug)]
 pub enum Instruction {
     /// ADd with Carry
@@ -115,339 +118,84 @@ pub enum Instruction {
 }
 
 pub trait Instructions {
-    /// Add the accumulator, the value at the given address, and the carry bit,
-    /// and store the result in the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set if the result overflows past bit 7.
-    /// * Z - set if the result is zero.
-    /// * V - set if bit 7 of the result is incorrect.
-    /// * N - set if bit 7 of the result is set.
-    fn adc(&mut self, addr: u16);
+    fn call(&mut self, instruction: &Instruction, addr: Option<u16>);
+    fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
+    where
+        CB: Fn(&mut Self, u16);
+}
 
-    /// Perform a bitwise and between the accumulator and the value at the given
-    /// address, and store the result in the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is zero.
-    /// * N - set if bit 7 of the result is set.
-    fn and(&mut self, addr: u16);
+impl<T> Instructions for T
+where
+    T: Cpu6502,
+{
+    /// Call the corresponding function for the given instruction.
+    fn call(&mut self, instruction: &Instruction, addr: Option<u16>) {
+        match instruction {
+            Instruction::Adc => self.with_operand(Self::adc, addr),
+            Instruction::And => self.with_operand(Self::and, addr),
+            Instruction::Asl => self.asl(addr), // handles None case to operate on accumulator
+            Instruction::Bcc => self.with_operand(Self::bcc, addr),
+            Instruction::Bcs => self.with_operand(Self::bcs, addr),
+            Instruction::Beq => self.with_operand(Self::beq, addr),
+            Instruction::Bit => self.with_operand(Self::bit, addr),
+            Instruction::Bmi => self.with_operand(Self::bmi, addr),
+            Instruction::Bne => self.with_operand(Self::bne, addr),
+            Instruction::Bpl => self.with_operand(Self::bpl, addr),
+            Instruction::Brk => self.brk(),
+            Instruction::Bvc => self.with_operand(Self::bvc, addr),
+            Instruction::Bvs => self.with_operand(Self::bvs, addr),
+            Instruction::Clc => self.clc(),
+            Instruction::Cld => self.cld(),
+            Instruction::Cli => self.cli(),
+            Instruction::Clv => self.clv(),
+            Instruction::Cmp => self.with_operand(Self::cmp, addr),
+            Instruction::Cpx => self.with_operand(Self::cpx, addr),
+            Instruction::Cpy => self.with_operand(Self::cpy, addr),
+            Instruction::Dec => self.with_operand(Self::dec, addr),
+            Instruction::Dex => self.dex(),
+            Instruction::Dey => self.dey(),
+            Instruction::Eor => self.with_operand(Self::eor, addr),
+            Instruction::Inc => self.with_operand(Self::inc, addr),
+            Instruction::Inx => self.inx(),
+            Instruction::Iny => self.iny(),
+            Instruction::Jmp => self.with_operand(Self::jmp, addr),
+            Instruction::Jsr => self.with_operand(Self::jsr, addr),
+            Instruction::Lda => self.with_operand(Self::lda, addr),
+            Instruction::Ldx => self.with_operand(Self::ldx, addr),
+            Instruction::Ldy => self.with_operand(Self::ldy, addr),
+            Instruction::Lsr => todo!(),
+            Instruction::Nop => self.nop(),
+            Instruction::Ora => self.with_operand(Self::ora, addr),
+            Instruction::Pha => todo!(),
+            Instruction::Php => todo!(),
+            Instruction::Pla => todo!(),
+            Instruction::Plp => todo!(),
+            Instruction::Rol => self.rol(addr), // handles None case to operate on accumulator
+            Instruction::Ror => self.ror(addr), // handles None case to operate on accumulator
+            Instruction::Rti => todo!(),
+            Instruction::Rts => self.rts(),
+            Instruction::Sbc => self.with_operand(Self::sbc, addr),
+            Instruction::Sec => self.sec(),
+            Instruction::Sed => self.sed(),
+            Instruction::Sei => self.sei(),
+            Instruction::Sta => self.with_operand(Self::sta, addr),
+            Instruction::Stx => self.with_operand(Self::stx, addr),
+            Instruction::Sty => self.with_operand(Self::sty, addr),
+            Instruction::Tax => self.tax(),
+            Instruction::Tay => self.tay(),
+            Instruction::Tsx => self.tsx(),
+            Instruction::Txa => self.txa(),
+            Instruction::Txs => self.txs(),
+            Instruction::Tya => self.tya(),
+        }
+    }
 
-    /// Shift the accumulator or the value at the given address to the left by 1
-    /// and store the result in the same location.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set if bit 7 of the initial value is set.
-    /// * Z - set if the result is zero.
-    /// * N - set if bit 7 of the result is set.
-    fn asl(&mut self, addr: Option<u16>);
-
-    /// Branch to the given address if the carry bit is not set.
-    fn bcc(&mut self, displacement: u16);
-
-    /// Branch to the given address if the carry bit is set.
-    fn bcs(&mut self, displacement: u16);
-
-    /// Branch to the given address if the zero bit is set.
-    fn beq(&mut self, displacement: u16);
-
-    /// Perform a bit test on the value at the given address.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the bitwise and of the accumulator and the value is zero.
-    /// * V - set to bit 6 of the value.
-    /// * N - set to bit 7 of the value.
-    fn bit(&mut self, addr: u16);
-
-    /// Branch to the given address if the negative bit is set.
-    fn bmi(&mut self, displacement: u16);
-
-    /// Branch to the given address if the zero bit is not set.
-    fn bne(&mut self, displacement: u16);
-
-    /// Branch to the given address if the negative bit is not set.
-    fn bpl(&mut self, displacement: u16);
-
-    /// Force an interrupt, pushing the the program counter and processor status
-    /// onto the stack, setting the program counter to the value at the
-    /// designated interrupt address, and set the break bits.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * B - set to 1.
-    /// * B2 - set to 1.
-    fn brk(&mut self);
-
-    /// Branch to the given address if the overflow bit is not set.
-    fn bvc(&mut self, displacement: u16);
-
-    /// Branch to the given address if the overflow bit is set.
-    fn bvs(&mut self, displacement: u16);
-
-    /// Clear the carry bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set to 0.
-    fn clc(&mut self);
-
-    /// Clear the decimal bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * D - set to 0.
-    fn cld(&mut self);
-
-    /// Clear the interrupt disable bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * I - set to 0.
-    fn cli(&mut self);
-
-    /// Clear the overflow bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * V - set to 0.
-    fn clv(&mut self);
-
-    /// Compare the value at the given address to the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set if accumulator >= value at address.
-    /// * Z - set if accumulator == value at address.
-    /// * N - set if accumulator <= value at address.
-    fn cmp(&mut self, addr: u16);
-
-    /// Compare the value at the given address to the X register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set if X register >= value at address.
-    /// * Z - set if X register == value at address.
-    /// * N - set if X register <= value at address.
-    fn cpx(&mut self, addr: u16);
-
-    /// Compare the value at the given address to the Y register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set if Y register >= value at address.
-    /// * Z - set if Y register == value at address.
-    /// * N - set if Y register <= value at address.
-    fn cpy(&mut self, addr: u16);
-
-    /// Decrement the value at the given address.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn dec(&mut self, addr: u16);
-
-    /// Decrement the value in the X register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn dex(&mut self);
-
-    /// Decrement the value in the Y register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn dey(&mut self);
-
-    /// Perform a bitwise exclusive or between the accumulator and the value at
-    /// the given address, and store the result in the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn eor(&mut self, addr: u16);
-
-    /// Increment the value at the given address by 1, wrapping to 0 if the
-    /// result would overflow.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn inc(&mut self, addr: u16);
-
-    /// Increment the X register by 1, wrapping to 0 if the result would
-    /// overflow.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn inx(&mut self);
-
-    /// Increment the Y register by 1, wrapping to 0 if the result would
-    /// overflow.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn iny(&mut self);
-
-    /// Set the program counter to the specified address.
-    fn jmp(&mut self, addr: u16);
-
-    /// Push the address of the next sequential instruction onto the stack, and
-    /// set the program counter to the given address.
-    fn jsr(&mut self, addr: u16);
-
-    /// Set the accumulator to the value at the given address.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn lda(&mut self, addr: u16);
-
-    /// Set the X register to the value at the given address.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn ldx(&mut self, addr: u16);
-
-    /// Set the Y register to the value at the given address.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn ldy(&mut self, addr: u16);
-
-    /// Performs no other operations.
-    fn nop(&self) {}
-
-    /// Perform a bitwise or between the accumulator and the value at the given
-    /// address, and store the result in the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn ora(&mut self, addr: u16);
-
-    /// Rotate the bits in the accumulator or at the given address one place to
-    /// the left through the carry bit.
-    ///
-    /// Processor status bits affected:
-    /// * C - set to bit 7 of the initial value.
-    /// * Z - set if the result is 0.
-    /// * N - set if the bit 7 of the new value is set.
-    fn rol(&mut self, addr: Option<u16>);
-
-    /// Rotate the bits in the accumulator or at the given address one place to
-    /// the right through the carry bit.
-    ///
-    /// Processor status bits affected:
-    /// * C - set to bit 0 of the initial value.
-    /// * Z - set if the result is 0.
-    /// * N - set if the bit 7 of the new value is set.
-    fn ror(&mut self, addr: Option<u16>);
-
-    /// Return from a subroutine by setting the program counter to the last
-    /// value on the stack.
-    fn rts(&mut self);
-
-    /// Subtract the value at the given address from the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set if the result overflows past bit 7.
-    /// * Z - set if the result is 0.
-    /// * V - set if bit 7 of the result is incorrect.
-    /// * N - set to bit 7 of the result.
-    fn sbc(&mut self, addr: u16);
-
-    /// Set the carry bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * C - set to 1.
-    fn sec(&mut self);
-
-    /// Set the decimal bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * D - set to 1.
-    fn sed(&mut self);
-
-    /// Set the interrupt disable bit.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * I - set to 1.
-    fn sei(&mut self);
-
-    /// Store the accumulator at the given address.
-    fn sta(&mut self, addr: u16);
-
-    /// Store the X register at the given address.
-    fn stx(&mut self, addr: u16);
-
-    /// Store the Y register at the given address.
-    fn sty(&mut self, addr: u16);
-
-    /// Store the accumulator in the X register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn tax(&mut self);
-
-    /// Store the accumulator in the Y register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn tay(&mut self);
-
-    /// Store the stack pointer in the X register.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn tsx(&mut self);
-
-    /// Store the X register in the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn txa(&mut self);
-
-    /// Store the X register in the stack pointer.
-    fn txs(&mut self);
-
-    /// Store the Y register in the accumulator.
-    ///
-    /// Processor status bits affected:
-    ///
-    /// * Z - set if the result is 0.
-    /// * N - set to bit 7 of the result.
-    fn tya(&mut self);
+    /// Call the given callback that requires an operand and panic if the operand
+    /// is missing.
+    fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
+    where
+        CB: Fn(&mut Self, u16),
+    {
+        callback(self, addr.expect("Required operand is missing"))
+    }
 }
