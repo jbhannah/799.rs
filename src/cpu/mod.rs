@@ -1,4 +1,4 @@
-use std::fmt::LowerHex;
+use std::{fmt::LowerHex, ops::Shr};
 
 use self::{
     cpu_6502::Cpu6502,
@@ -26,7 +26,7 @@ pub struct StackPointer(u8);
 impl Default for StackPointer {
     /// Default the stack pointer to the first address of the stack in memory.
     fn default() -> Self {
-        Self(memory::STACK as u8)
+        Self(memory::STACK_RESET)
     }
 }
 
@@ -38,14 +38,17 @@ impl From<StackPointer> for u8 {
 
 impl From<StackPointer> for u16 {
     fn from(s: StackPointer) -> Self {
-        s.0.into()
+        memory::STACK + u16::from(s.0)
     }
 }
 
 impl StackPointer {
-    /// Advance the stack pointer to the first unoccupied space in the stack.
-    pub fn advance(&mut self, offset: i16) {
-        self.0 = (i16::from(self.0) + offset) as u8;
+    pub fn wrapping_add(self, rhs: u8) -> Self {
+        Self(self.0.wrapping_add(rhs))
+    }
+
+    pub fn wrapping_sub(self, rhs: u8) -> Self {
+        Self(self.0.wrapping_sub(rhs))
     }
 }
 
@@ -239,20 +242,27 @@ impl CPU {
         self.status.set_zero(value);
     }
 
-    /// Pop a value off of the stack and advance the stack pointer in reverse.
-    /// TODO: prevent pop on empty stack
-    /// TODO: reset popped addresses to 0
+    /// Pop a value off of the stack and advance the stack pointer.
     fn stack_pop<T: MemoryValue>(&mut self) -> T {
-        self.stack_pointer.advance(T::BITS as i16 / -8);
-        let val: T = self.memory.read(self.stack_pointer.into());
-        val
+        let sp = self.stack_pointer.wrapping_add(1);
+
+        self.stack_pointer = if T::BITS / 8 == 2 {
+            sp.wrapping_add(1)
+        } else {
+            sp
+        };
+
+        self.memory.read(sp.into())
     }
 
-    /// Push a value onto the stack and advance the stack pointer.
-    /// TODO: prevent push past limit of stack
-    fn stack_push<T: MemoryValue>(&mut self, value: T) {
+    /// Push a value onto the stack and retreat the stack pointer.
+    fn stack_push<T: MemoryValue + Shr<u8>>(&mut self, value: T) {
+        if T::BITS / 8 == 2 {
+            self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+        }
+
         self.memory.write(self.stack_pointer.into(), value);
-        self.stack_pointer.advance(T::BITS as i16 / 8);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 }
 

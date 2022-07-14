@@ -1,6 +1,24 @@
 use super::*;
 
 #[test]
+fn test_0x00_brk() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x00]);
+    cpu.reset();
+
+    let status = cpu.status.bits();
+    let pc = cpu.program_counter;
+
+    cpu.run();
+
+    assert_eq!(cpu.stack_pop::<u8>(), status);
+    assert_eq!(cpu.stack_pop::<u16>(), pc + 1);
+
+    assert!(cpu.status.contains(Status::Break));
+    assert!(cpu.status.contains(Status::Break2));
+}
+
+#[test]
 fn test_0xa0_ldy_immediate() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa0, 0x05, 0x00]);

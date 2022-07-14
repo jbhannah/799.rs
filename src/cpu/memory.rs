@@ -2,7 +2,8 @@ use super::mode::Mode;
 
 pub const MEMORY_SIZE: usize = 0x10000;
 
-pub const STACK: u16 = 0x00FD;
+pub const STACK: u16 = 0x0100;
+pub const STACK_RESET: u8 = 0xFD;
 pub const RESET: u16 = 0xFFFC;
 pub const INTERRUPT: u16 = 0xFFFE;
 
@@ -15,7 +16,7 @@ pub trait MemoryValue {
     fn read_from_memory(memory: &Memory, addr: usize) -> Self;
 
     /// Write a value to the appropriate number of bytes in memory.
-    fn write_to_memory(memory: &mut Memory, addr: usize, val: Self);
+    fn write_to_memory(memory: &mut Memory, addr: usize, value: Self);
 }
 
 impl MemoryValue for u8 {
@@ -27,8 +28,8 @@ impl MemoryValue for u8 {
     }
 
     /// Write a u8 value to a single byte of memory.
-    fn write_to_memory(memory: &mut Memory, addr: usize, val: Self) {
-        memory.0[addr] = val;
+    fn write_to_memory(memory: &mut Memory, addr: usize, value: Self) {
+        memory.0[addr] = value;
     }
 }
 
@@ -45,11 +46,11 @@ impl MemoryValue for u16 {
     }
 
     /// Write a u16 value in little-endian form to two bytes of memory.
-    fn write_to_memory(memory: &mut Memory, addr: usize, val: Self) {
+    fn write_to_memory(memory: &mut Memory, addr: usize, value: Self) {
         let (_, right) = memory.0.split_at_mut(addr);
         let (mid, _) = right.split_at_mut(2);
 
-        mid.copy_from_slice(&val.to_le_bytes());
+        mid.copy_from_slice(&value.to_le_bytes());
     }
 }
 
@@ -78,8 +79,8 @@ impl Memory {
     }
 
     /// Write a u8 or u16 to memory.
-    pub fn write<T: MemoryValue>(&mut self, addr: u16, val: T) {
-        T::write_to_memory(self, addr as usize, val)
+    pub fn write<T: MemoryValue>(&mut self, addr: u16, value: T) {
+        T::write_to_memory(self, addr as usize, value)
     }
 }
 
