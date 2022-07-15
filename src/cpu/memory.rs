@@ -3,9 +3,9 @@ use super::mode::Mode;
 pub const MEMORY_SIZE: usize = 0x10000;
 
 pub const STACK: u16 = 0x0100;
-pub const STACK_RESET: u8 = 0xFD;
-pub const RESET: u16 = 0xFFFC;
-pub const INTERRUPT: u16 = 0xFFFE;
+pub const STACK_RESET: u8 = 0xfd;
+pub const RESET: u16 = 0xfffc;
+pub const INTERRUPT: u16 = 0xfffe;
 
 /// Trait to read and write values of different sizes into memory.
 pub trait MemoryValue {
@@ -91,15 +91,15 @@ mod test {
     #[test]
     fn test_read_u8() {
         let mut memory = Memory::default();
-        memory.0[0xBEEF] = 0x42;
+        memory.0[0xbeef] = 0x42;
 
-        assert_eq!(memory.read::<u8>(0xBEEF), 0x42);
+        assert_eq!(memory.read::<u8>(0xbeef), 0x42);
     }
 
     #[test]
     fn test_read_u16() {
         let mut memory = Memory::default();
-        let addr = 0xBEEF;
+        let addr = 0xbeef;
 
         memory.0[addr] = 0x42;
         memory.0[addr + 1] = 0x43;
@@ -110,15 +110,15 @@ mod test {
     #[test]
     fn test_write_u8() {
         let mut memory = Memory::default();
-        memory.write(0xBEEF, 0x42_u8);
+        memory.write(0xbeef, 0x42_u8);
 
-        assert_eq!(memory.0[0xBEEF], 0x42);
+        assert_eq!(memory.0[0xbeef], 0x42);
     }
 
     #[test]
     fn test_write_u16() {
         let mut memory = Memory::default();
-        let addr = 0xBEEF;
+        let addr = 0xbeef;
 
         memory.write(addr, 0x4342_u16);
 
