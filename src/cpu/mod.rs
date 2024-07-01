@@ -13,7 +13,9 @@ mod cpu_6502;
 mod instructions;
 mod memory;
 pub mod mode;
+pub mod opcode;
 mod opcode_mapping;
+mod program;
 mod status;
 
 #[cfg(test)]
@@ -103,8 +105,8 @@ impl CPU {
             let code: u8 = self.read_program_counter();
 
             let opcode = opcodes
-                .get(&code)
-                .unwrap_or_else(|| panic!("Opcode {:x} is not recognized", code));
+                .get(&code.try_into().unwrap_or_else(|code| panic!("{}", code)))
+                .unwrap();
 
             let addr = self.get_operand_address(&opcode.mode);
             self.call(&opcode.instruction, addr);

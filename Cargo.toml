@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 bitmask-enum = "2.2.2"
 lazy_static = "1.4.0"
+num = "0.4.3"
+num-derive = "0.4.2"
+num-traits = "0.2.19"

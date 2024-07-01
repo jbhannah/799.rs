@@ -1,9 +1,15 @@
+use opcode::OpCode;
+use program::Program;
+
 use super::*;
 
 #[test]
 fn test_0x00_brk() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x00]);
+
+    let program = Program(vec![OpCode::BrkNoneAddressing]);
+
+    cpu.load(program.into());
     cpu.reset();
 
     let status = cpu.status.bits();
