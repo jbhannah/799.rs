@@ -5,7 +5,7 @@ use self::{
     instructions::Instructions,
     memory::{Memory, MemoryValue},
     mode::Mode,
-    opcodes::AddressingMode,
+    opcode_mapping::AddressingMode,
     status::Status,
 };
 
@@ -13,7 +13,7 @@ mod cpu_6502;
 mod instructions;
 mod memory;
 pub mod mode;
-mod opcodes;
+mod opcode_mapping;
 mod status;
 
 #[cfg(test)]
@@ -97,7 +97,7 @@ impl CPU {
 
     /// Read and execute each instruction in the program.
     pub fn run(&mut self) {
-        let opcodes = &(*opcodes::OPCODES_MAP);
+        let opcodes = &(*opcode_mapping::OPCODES_MAP);
 
         loop {
             let code: u8 = self.read_program_counter();
