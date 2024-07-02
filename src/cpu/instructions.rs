@@ -118,17 +118,17 @@ pub enum Instruction {
 }
 
 pub trait Instructions {
+    /// Call the corresponding function for the given instruction.
     fn call(&mut self, instruction: &Instruction, addr: Option<u16>);
+
+    /// Call the given callback that requires an operand and panic if the operand
+    /// is missing.
     fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
     where
         CB: Fn(&mut Self, u16);
 }
 
-impl<T> Instructions for T
-where
-    T: Cpu6502,
-{
-    /// Call the corresponding function for the given instruction.
+impl<T: Cpu6502> Instructions for T {
     fn call(&mut self, instruction: &Instruction, addr: Option<u16>) {
         match instruction {
             Instruction::Adc => self.with_operand(Self::adc, addr),
@@ -190,8 +190,6 @@ where
         }
     }
 
-    /// Call the given callback that requires an operand and panic if the operand
-    /// is missing.
     fn with_operand<CB>(&mut self, callback: CB, addr: Option<u16>)
     where
         CB: Fn(&mut Self, u16),

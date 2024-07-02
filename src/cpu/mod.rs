@@ -1,6 +1,7 @@
 use std::{fmt::LowerHex, ops::Shr};
 
 use bus::{BitSize, Bus, MemoryValue};
+use stack_pointer::StackPointer;
 
 use self::{
     cpu_6502::Cpu6502, instructions::Instructions, mode::Mode, opcode_mapping::AddressingMode,
@@ -14,50 +15,14 @@ pub mod mode;
 pub mod opcode;
 mod opcode_mapping;
 mod program;
+mod stack_pointer;
 mod status;
 
 #[cfg(test)]
 mod test;
 
-const STACK_ADDR: u16 = 0x0100;
 const RESET_ADDR: u16 = 0xfffc;
 const INTERRUPT_ADDR: u16 = 0xfffe;
-
-const STACK_POINTER_RESET: u8 = 0xfd;
-
-/// One-byte stack pointer.
-#[derive(Debug, Clone, Copy)]
-pub struct StackPointer(u8);
-
-impl Default for StackPointer {
-    /// Default the stack pointer to the top of the stack address space in
-    /// memory.
-    fn default() -> Self {
-        Self(STACK_POINTER_RESET)
-    }
-}
-
-impl From<StackPointer> for u8 {
-    fn from(s: StackPointer) -> Self {
-        s.0
-    }
-}
-
-impl From<StackPointer> for u16 {
-    fn from(s: StackPointer) -> Self {
-        STACK_ADDR + u16::from(s.0)
-    }
-}
-
-impl StackPointer {
-    pub fn wrapping_add(self, rhs: u8) -> Self {
-        Self(self.0.wrapping_add(rhs))
-    }
-
-    pub fn wrapping_sub(self, rhs: u8) -> Self {
-        Self(self.0.wrapping_sub(rhs))
-    }
-}
 
 /// Implementation of the NES's 6502-like 2A03 CPU.
 #[derive(Debug, Default)]
@@ -186,9 +151,9 @@ impl CPU {
         Bus: MemoryValue<T>,
     {
         let val: T = self.bus.read(self.program_counter);
-        println!("{:x}: {:x}", self.program_counter, val);
+        // println!("{:x}: {:x}", self.program_counter, val);
         self.program_counter += T::BITS / 8;
-        println!("{:x}", self.program_counter);
+        // println!("{:x}", self.program_counter);
         val
     }
 
@@ -576,7 +541,7 @@ impl Cpu6502 for CPU {
     }
 
     fn txs(&mut self) {
-        self.stack_pointer = StackPointer(self.index_x);
+        self.stack_pointer = self.index_x.into();
     }
 
     fn tya(&mut self) {
