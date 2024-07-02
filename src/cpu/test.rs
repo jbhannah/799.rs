@@ -42,8 +42,8 @@ fn test_0xa1_lda_indirect_x() {
     cpu.index_x = 0x10;
     let addr: u16 = 0xbafc;
 
-    cpu.memory.write((0x20 + cpu.index_x).into(), addr);
-    cpu.memory.write(addr, 0x42_u8);
+    cpu.bus.write((0x20 + cpu.index_x).into(), addr);
+    cpu.bus.write(addr, 0x42_u8);
 
     cpu.run();
 
@@ -60,8 +60,8 @@ fn test_0xb1_lda_indirect_y() {
     cpu.index_y = 0x10;
     let addr: u16 = 0xbafc;
 
-    cpu.memory.write(0x20, addr);
-    cpu.memory.write(addr + u16::from(cpu.index_y), 0x42_u8);
+    cpu.bus.write(0x20, addr);
+    cpu.bus.write(addr + u16::from(cpu.index_y), 0x42_u8);
 
     cpu.run();
 
@@ -79,7 +79,7 @@ fn test_0xa2_ldx_immediate() {
 #[test]
 fn test_0xa5_lda_zero_page() {
     let mut cpu = CPU::new();
-    cpu.memory.write(0x10, 0x55_u8);
+    cpu.bus.write(0x10, 0x55_u8);
     cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
 
     assert_eq!(cpu.accumulator, 0x55);
@@ -134,10 +134,10 @@ fn test_0xa8_tay() {
 #[test]
 fn test_0xe6_inc_zero_page() {
     let mut cpu = CPU::new();
-    cpu.memory.write(0x10, 0x55_u8);
+    cpu.bus.write(0x10, 0x55_u8);
     cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
 
-    assert_eq!(cpu.memory.read::<u8>(0x10), 0x56);
+    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x10), 0x56);
 }
 
 #[test]
@@ -234,7 +234,7 @@ fn test_0x85_sta() {
         0x00,
     ]);
 
-    assert_eq!(cpu.memory.read::<u8>(0x00), 0x42)
+    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42)
 }
 
 #[test]
@@ -247,7 +247,7 @@ fn test_0x86_stx() {
         0x00,
     ]);
 
-    assert_eq!(cpu.memory.read::<u8>(0x00), 0x42);
+    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
 }
 
 #[test]
@@ -260,7 +260,7 @@ fn test_0x84_sty() {
         0x00,
     ]);
 
-    assert_eq!(cpu.memory.read::<u8>(0x00), 0x42);
+    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
 }
 
 #[test]
@@ -305,16 +305,16 @@ fn test_0x06_asl() {
     ]);
 
     assert!(!cpu.status.contains(Status::Carry));
-    assert_eq!(cpu.memory.read::<u8>(0x00), 0b1010_1010);
+    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0b1010_1010);
 }
 
 #[test]
 fn test_0xc6_dec_absolute() {
     let mut cpu = CPU::new();
-    cpu.memory.write(0x1010, 0x42_u8);
-    cpu.load_and_run(vec![0xce, 0x10, 0x10, 0x00]);
+    cpu.bus.write(0x0110, 0x42_u8);
+    cpu.load_and_run(vec![0xce, 0x10, 0x01, 0x00]);
 
-    assert_eq!(cpu.memory.read::<u8>(0x1010), 0x41);
+    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x1010), 0x41);
 }
 
 #[test]
@@ -360,11 +360,11 @@ fn test_0x6a_ror_accumulator() {
 #[test]
 fn test_0x6c_jmp_indirect() {
     let mut cpu = CPU::new();
-    let addr: u16 = 0xbafc;
+    let addr: u16 = 0x0110;
 
-    cpu.memory.write(0x0120, addr); // set the value at $0120 and $0121 to the address of the next instruction
-    cpu.memory.write(addr, 0x42a9_u16); // load 0x42 into the accumulator (0xa9, 0x42 stored little-endian)
-    cpu.memory.write(addr + 2, 0x00_u8);
+    cpu.bus.write(0x0120, addr); // set the value at $0120 and $0121 to the address of the next instruction
+    cpu.bus.write(addr, 0x42a9_u16); // load 0x42 into the accumulator (0xa9, 0x42 stored little-endian)
+    cpu.bus.write(addr + 2, 0x00_u8);
 
     cpu.load_and_run(vec![0x6c, 0x20, 0x01, 0x00]);
 
@@ -396,7 +396,7 @@ fn test_0x48_pha() {
     cpu.run();
 
     assert_eq!(
-        cpu.memory.read::<u8>(StackPointer::default().into()),
+        bus::MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
         cpu.accumulator
     );
 }
@@ -407,7 +407,7 @@ fn test_0x08_php() {
     cpu.load_and_run(vec![0x08, 0x00]);
 
     assert_eq!(
-        cpu.memory.read::<u8>(StackPointer::default().into()),
+        bus::MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
         cpu.status.bits()
     );
 }
@@ -448,13 +448,13 @@ fn test_0x40_rti() {
     cpu.load(vec![0x40, 0x00]);
     cpu.reset();
 
-    let pc = 0xa000_u16;
+    let pc = 0x00a0_u16;
     cpu.stack_push(pc);
 
     let status = 0xff_u8;
     cpu.stack_push(status);
 
-    cpu.memory.write(pc, 0x00_u8);
+    cpu.bus.write(pc, 0x00_u8);
 
     cpu.run();
 

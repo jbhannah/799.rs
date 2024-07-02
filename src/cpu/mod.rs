@@ -1,17 +1,15 @@
 use std::{fmt::LowerHex, ops::Shr};
 
+use bus::{BitSize, Bus, MemoryValue};
+
 use self::{
-    cpu_6502::Cpu6502,
-    instructions::Instructions,
-    memory::{Memory, MemoryValue},
-    mode::Mode,
-    opcode_mapping::AddressingMode,
+    cpu_6502::Cpu6502, instructions::Instructions, mode::Mode, opcode_mapping::AddressingMode,
     status::Status,
 };
 
+mod bus;
 mod cpu_6502;
 mod instructions;
-mod memory;
 pub mod mode;
 pub mod opcode;
 mod opcode_mapping;
@@ -21,6 +19,12 @@ mod status;
 #[cfg(test)]
 mod test;
 
+const STACK_ADDR: u16 = 0x0100;
+const RESET_ADDR: u16 = 0xfffc;
+const INTERRUPT_ADDR: u16 = 0xfffe;
+
+const STACK_POINTER_RESET: u8 = 0xfd;
+
 /// One-byte stack pointer.
 #[derive(Debug, Clone, Copy)]
 pub struct StackPointer(u8);
@@ -29,7 +33,7 @@ impl Default for StackPointer {
     /// Default the stack pointer to the top of the stack address space in
     /// memory.
     fn default() -> Self {
-        Self(memory::STACK_RESET)
+        Self(STACK_POINTER_RESET)
     }
 }
 
@@ -41,7 +45,7 @@ impl From<StackPointer> for u8 {
 
 impl From<StackPointer> for u16 {
     fn from(s: StackPointer) -> Self {
-        memory::STACK + u16::from(s.0)
+        STACK_ADDR + u16::from(s.0)
     }
 }
 
@@ -64,7 +68,7 @@ pub struct CPU {
     pub program_counter: u16,
     pub stack_pointer: StackPointer,
     pub status: Status,
-    memory: Memory,
+    bus: Bus,
     pub mode: Mode,
 }
 
@@ -83,7 +87,7 @@ impl CPU {
 
     /// Load a program into memory.
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory.load(program, self.mode);
+        self.bus.load(program, self.mode);
     }
 
     /// Set the program counter to the value at the designated reset address in
@@ -91,8 +95,8 @@ impl CPU {
     /// values, while preserving the contents of memory.
     pub fn reset(&mut self) {
         *self = Self {
-            program_counter: self.memory.read(memory::RESET),
-            memory: self.memory,
+            program_counter: self.mode.program_rom(),
+            bus: self.bus,
             ..Default::default()
         }
     }
@@ -154,15 +158,15 @@ impl CPU {
             AddressingMode::Indirect => {
                 let addr: u16 = self.read_program_counter();
                 // TODO: fail if addr as u8 == 0xff
-                Some(self.memory.read(addr))
+                Some(self.bus.read(addr))
             }
             AddressingMode::IndirectX => {
                 let ptr: u8 = self.read_program_counter();
-                Some(self.memory.read(ptr.wrapping_add(self.index_x).into()))
+                Some(self.bus.read(ptr.wrapping_add(self.index_x).into()))
             }
             AddressingMode::IndirectY => {
                 let ptr: u8 = self.read_program_counter();
-                let addr: u16 = self.memory.read(ptr.into());
+                let addr: u16 = self.bus.read(ptr.into());
                 Some(addr.wrapping_add(self.index_y.into()))
             }
 
@@ -177,8 +181,11 @@ impl CPU {
 
     /// Read the value at the address of the program counter, and increment the
     /// counter by the number of bytes in the returned value.
-    fn read_program_counter<T: MemoryValue + LowerHex>(&mut self) -> T {
-        let val: T = self.memory.read(self.program_counter);
+    fn read_program_counter<T: BitSize + LowerHex>(&mut self) -> T
+    where
+        Bus: MemoryValue<T>,
+    {
+        let val: T = self.bus.read(self.program_counter);
         println!("{:x}: {:x}", self.program_counter, val);
         self.program_counter += T::BITS / 8;
         println!("{:x}", self.program_counter);
@@ -211,7 +218,7 @@ impl CPU {
     /// Compare the given value to the value at the given address, and set the
     /// carry, zero, and negative flags accordingly.
     fn compare(&mut self, value: u8, addr: u16) {
-        let rhs: u8 = self.memory.read(addr);
+        let rhs: u8 = self.bus.read(addr);
         let result = value.wrapping_sub(rhs);
 
         self.status.set(Status::Carry, value >= rhs);
@@ -247,7 +254,10 @@ impl CPU {
     }
 
     /// Pop a value off of the stack and advance the stack pointer.
-    fn stack_pop<T: MemoryValue>(&mut self) -> T {
+    fn stack_pop<T: BitSize>(&mut self) -> T
+    where
+        Bus: MemoryValue<T>,
+    {
         let sp = self.stack_pointer.wrapping_add(1);
 
         self.stack_pointer = if T::BITS / 8 == 2 {
@@ -256,32 +266,36 @@ impl CPU {
             sp
         };
 
-        self.memory.read(sp.into())
+        self.bus.read(sp.into())
     }
 
     /// Push a value onto the stack and retreat the stack pointer.
-    fn stack_push<T: MemoryValue + Shr<u8>>(&mut self, value: T) {
+    fn stack_push<T: BitSize + Shr<u8>>(&mut self, value: T)
+    where
+        Bus: MemoryValue<T>,
+    {
         if T::BITS / 8 == 2 {
             self.stack_pointer = self.stack_pointer.wrapping_sub(1);
         }
 
-        self.memory.write(self.stack_pointer.into(), value);
+        self.bus.write(self.stack_pointer.into(), value);
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 }
 
 impl Cpu6502 for CPU {
     fn adc(&mut self, addr: u16) {
-        self.add_to_accumulator(self.memory.read(addr));
+        self.add_to_accumulator(self.bus.read(addr));
     }
 
     fn and(&mut self, addr: u16) {
-        self.set_accumulator(self.accumulator & self.memory.read::<u8>(addr));
+        let value: u8 = self.bus.read(addr);
+        self.set_accumulator(self.accumulator & value);
     }
 
     fn asl(&mut self, addr: Option<u16>) {
         let value = match addr {
-            Some(addr) => self.memory.read(addr),
+            Some(addr) => self.bus.read(addr),
             None => self.accumulator,
         };
 
@@ -291,7 +305,7 @@ impl Cpu6502 for CPU {
         self.set_status_negative_zero(result);
 
         match addr {
-            Some(addr) => self.memory.write(addr, result),
+            Some(addr) => self.bus.write(addr, result),
             None => self.accumulator = result,
         };
     }
@@ -309,7 +323,7 @@ impl Cpu6502 for CPU {
     }
 
     fn bit(&mut self, addr: u16) {
-        let value: u8 = self.memory.read(addr);
+        let value: u8 = self.bus.read(addr);
 
         self.status.set_zero(self.accumulator & value);
         self.status.set_overflow(value & 0b0100_0000 != 0);
@@ -332,7 +346,7 @@ impl Cpu6502 for CPU {
         self.stack_push(self.program_counter);
         self.php();
 
-        self.program_counter = self.memory.read(memory::INTERRUPT);
+        self.program_counter = self.bus.read(INTERRUPT_ADDR);
 
         self.status.set(Status::Break, true);
         self.status.set(Status::Break2, true);
@@ -375,10 +389,10 @@ impl Cpu6502 for CPU {
     }
 
     fn dec(&mut self, addr: u16) {
-        let value: u8 = self.memory.read(addr);
+        let value: u8 = self.bus.read(addr);
         let result = value.wrapping_sub(1);
 
-        self.memory.write(addr, result);
+        self.bus.write(addr, result);
 
         self.set_status_negative_zero(result);
     }
@@ -392,14 +406,15 @@ impl Cpu6502 for CPU {
     }
 
     fn eor(&mut self, addr: u16) {
-        self.set_accumulator(self.accumulator ^ self.memory.read::<u8>(addr));
+        let value: u8 = self.bus.read(addr);
+        self.set_accumulator(self.accumulator ^ value);
     }
 
     fn inc(&mut self, addr: u16) {
-        let value: u8 = self.memory.read(addr);
+        let value: u8 = self.bus.read(addr);
         let result = value.wrapping_add(1);
 
-        self.memory.write(addr, result);
+        self.bus.write(addr, result);
 
         self.set_status_negative_zero(result);
     }
@@ -422,20 +437,20 @@ impl Cpu6502 for CPU {
     }
 
     fn lda(&mut self, addr: u16) {
-        self.set_accumulator(self.memory.read(addr));
+        self.set_accumulator(self.bus.read(addr));
     }
 
     fn ldx(&mut self, addr: u16) {
-        self.set_index_x(self.memory.read(addr));
+        self.set_index_x(self.bus.read(addr));
     }
 
     fn ldy(&mut self, addr: u16) {
-        self.set_index_y(self.memory.read(addr));
+        self.set_index_y(self.bus.read(addr));
     }
 
     fn lsr(&mut self, addr: Option<u16>) {
         let initial = match addr {
-            Some(addr) => self.memory.read(addr),
+            Some(addr) => self.bus.read(addr),
             None => self.accumulator,
         };
 
@@ -445,13 +460,14 @@ impl Cpu6502 for CPU {
         self.set_status_negative_zero(result);
 
         match addr {
-            Some(addr) => self.memory.write(addr, result),
+            Some(addr) => self.bus.write(addr, result),
             None => self.accumulator = result,
         }
     }
 
     fn ora(&mut self, addr: u16) {
-        self.set_accumulator(self.accumulator | self.memory.read::<u8>(addr));
+        let value: u8 = self.bus.read(addr);
+        self.set_accumulator(self.accumulator | value);
     }
 
     fn pha(&mut self) {
@@ -473,7 +489,7 @@ impl Cpu6502 for CPU {
 
     fn rol(&mut self, addr: Option<u16>) {
         let initial = match addr {
-            Some(addr) => self.memory.read(addr),
+            Some(addr) => self.bus.read(addr),
             None => self.accumulator,
         };
 
@@ -483,14 +499,14 @@ impl Cpu6502 for CPU {
         self.set_status_negative_zero(result);
 
         match addr {
-            Some(addr) => self.memory.write(addr, result),
+            Some(addr) => self.bus.write(addr, result),
             None => self.accumulator = result,
         };
     }
 
     fn ror(&mut self, addr: Option<u16>) {
         let initial = match addr {
-            Some(addr) => self.memory.read(addr),
+            Some(addr) => self.bus.read(addr),
             None => self.accumulator,
         };
 
@@ -500,7 +516,7 @@ impl Cpu6502 for CPU {
         self.set_status_negative_zero(result);
 
         match addr {
-            Some(addr) => self.memory.write(addr, result),
+            Some(addr) => self.bus.write(addr, result),
             None => self.accumulator = result,
         };
     }
@@ -515,11 +531,8 @@ impl Cpu6502 for CPU {
     }
 
     fn sbc(&mut self, addr: u16) {
-        self.add_to_accumulator(
-            (self.memory.read::<u8>(addr) as i8)
-                .wrapping_neg()
-                .wrapping_sub(1) as u8,
-        );
+        let value: u8 = self.bus.read(addr);
+        self.add_to_accumulator((value as i8).wrapping_neg().wrapping_sub(1) as u8);
     }
 
     fn sec(&mut self) {
@@ -535,15 +548,15 @@ impl Cpu6502 for CPU {
     }
 
     fn sta(&mut self, addr: u16) {
-        self.memory.write(addr, self.accumulator);
+        self.bus.write(addr, self.accumulator);
     }
 
     fn stx(&mut self, addr: u16) {
-        self.memory.write(addr, self.index_x);
+        self.bus.write(addr, self.index_x);
     }
 
     fn sty(&mut self, addr: u16) {
-        self.memory.write(addr, self.index_y);
+        self.bus.write(addr, self.index_y);
     }
 
     fn tax(&mut self) {

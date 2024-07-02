@@ -10,12 +10,12 @@ pub enum Mode {
 
 impl Default for Mode {
     fn default() -> Self {
-        Self::Rp2A03
+        Self::Mos6502
     }
 }
 
 impl Mode {
-    pub fn program_rom(&self) -> usize {
+    pub fn program_rom(&self) -> u16 {
         match self {
             Self::Mos6502 => 0x0600,
             Self::Rp2A03 | Self::Rp2A07 => 0x8000,
