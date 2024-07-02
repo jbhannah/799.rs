@@ -186,6 +186,7 @@ impl CPU {
     }
 
     /// Add the given value to the accumulator.
+    // TODO: decimal mode for Mos6502
     fn add_to_accumulator(&mut self, value: u8) {
         let sum =
             u16::from(self.accumulator + value) + u16::from(self.status.contains(Status::Carry));
