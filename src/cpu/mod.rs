@@ -27,12 +27,12 @@ const INTERRUPT_ADDR: u16 = 0xfffe;
 /// Implementation of the NES's 6502-like 2A03 CPU.
 #[derive(Debug, Default)]
 pub struct CPU {
-    pub accumulator: u8,
-    pub index_x: u8,
-    pub index_y: u8,
-    pub program_counter: u16,
-    pub stack_pointer: StackPointer,
-    pub status: Status,
+    accumulator: u8,
+    index_x: u8,
+    index_y: u8,
+    program_counter: u16,
+    stack_pointer: StackPointer,
+    status: Status,
     bus: Bus,
     pub mode: Mode,
 }
