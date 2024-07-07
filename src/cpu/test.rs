@@ -1,6 +1,8 @@
 use opcode::OpCode;
 use program::Program;
 
+use crate::bus::memory_value::MemoryValue;
+
 use super::*;
 
 #[test]
@@ -40,7 +42,7 @@ fn test_0xa1_lda_indirect_x() {
     cpu.reset();
 
     cpu.index_x = 0x10;
-    let addr: u16 = 0xbafc;
+    let addr: u16 = 0x0110;
 
     cpu.bus.write((0x20 + cpu.index_x).into(), addr);
     cpu.bus.write(addr, 0x42_u8);
@@ -58,7 +60,7 @@ fn test_0xb1_lda_indirect_y() {
     cpu.reset();
 
     cpu.index_y = 0x10;
-    let addr: u16 = 0xbafc;
+    let addr: u16 = 0x0110;
 
     cpu.bus.write(0x20, addr);
     cpu.bus.write(addr + u16::from(cpu.index_y), 0x42_u8);
@@ -137,7 +139,7 @@ fn test_0xe6_inc_zero_page() {
     cpu.bus.write(0x10, 0x55_u8);
     cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
 
-    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x10), 0x56);
+    assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x10), 0x56);
 }
 
 #[test]
@@ -234,7 +236,7 @@ fn test_0x85_sta() {
         0x00,
     ]);
 
-    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42)
+    assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42)
 }
 
 #[test]
@@ -247,7 +249,7 @@ fn test_0x86_stx() {
         0x00,
     ]);
 
-    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
+    assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
 }
 
 #[test]
@@ -260,7 +262,7 @@ fn test_0x84_sty() {
         0x00,
     ]);
 
-    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
+    assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
 }
 
 #[test]
@@ -305,7 +307,7 @@ fn test_0x06_asl() {
     ]);
 
     assert!(!cpu.status.contains(Status::Carry));
-    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x00), 0b1010_1010);
+    assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0b1010_1010);
 }
 
 #[test]
@@ -314,7 +316,7 @@ fn test_0xc6_dec_absolute() {
     cpu.bus.write(0x0110, 0x42_u8);
     cpu.load_and_run(vec![0xce, 0x10, 0x01, 0x00]);
 
-    assert_eq!(bus::MemoryValue::<u8>::read(&cpu.bus, 0x1010), 0x41);
+    assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x0110), 0x41);
 }
 
 #[test]
@@ -396,7 +398,7 @@ fn test_0x48_pha() {
     cpu.run();
 
     assert_eq!(
-        bus::MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
+        MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
         cpu.accumulator
     );
 }
@@ -407,7 +409,7 @@ fn test_0x08_php() {
     cpu.load_and_run(vec![0x08, 0x00]);
 
     assert_eq!(
-        bus::MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
+        MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
         cpu.status.bits()
     );
 }

@@ -10,6 +10,7 @@ use cpu::mode::Mode;
 
 use crate::cpu::CPU;
 
+pub mod bus;
 pub mod cpu;
 
 fn main() {

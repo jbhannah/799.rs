@@ -1,4 +1,7 @@
-use super::mode::Mode;
+use memory::Memory;
+
+mod memory;
+pub mod memory_value;
 
 const RAM: u16 = 0x0000;
 const RAM_MIRRORS_END: u16 = 0x1fff;
@@ -10,52 +13,6 @@ const PPU_REGISTERS_MIRRORS_END: u16 = 0x3fff;
 #[derive(Debug, Clone, Copy)]
 pub struct Bus {
     cpu_vram: [u8; 2048],
-}
-
-pub trait BitSize {
-    const BITS: u16;
-}
-
-impl BitSize for u8 {
-    const BITS: u16 = u8::BITS as u16;
-}
-
-impl BitSize for u16 {
-    const BITS: u16 = u16::BITS as u16;
-}
-
-pub trait MemoryValue<T: BitSize> {
-    fn read(&self, addr: u16) -> T;
-
-    fn write(&mut self, addr: u16, value: T);
-}
-
-trait Memory {
-    fn mem_read(&self, addr: u16) -> u8;
-
-    fn mem_write(&mut self, addr: u16, value: u8);
-}
-
-impl<T: Memory> MemoryValue<u8> for T {
-    fn read(&self, addr: u16) -> u8 {
-        self.mem_read(addr)
-    }
-
-    fn write(&mut self, addr: u16, value: u8) {
-        self.mem_write(addr, value);
-    }
-}
-
-impl<T: Memory> MemoryValue<u16> for T {
-    fn read(&self, addr: u16) -> u16 {
-        u16::from_le_bytes([self.mem_read(addr), self.mem_read(addr + 1)])
-    }
-
-    fn write(&mut self, addr: u16, value: u16) {
-        for (index, byte) in value.to_le_bytes().into_iter().enumerate() {
-            self.mem_write(addr + index as u16, byte);
-        }
-    }
 }
 
 impl Default for Bus {
@@ -73,7 +30,10 @@ impl Memory for Bus {
                 let mirror_down_addr = addr & RAM_MIRRORS_MASK;
                 self.cpu_vram[mirror_down_addr as usize]
             }
-            _ => todo!("read from address ${:X} ignored", addr),
+            _ => {
+                // todo!("read from address ${:X} ignored", addr);
+                0
+            }
         }
     }
 
@@ -89,15 +49,15 @@ impl Memory for Bus {
 }
 
 impl Bus {
-    pub fn load(&mut self, program: Vec<u8>, mode: Mode) {
-        let program_rom: usize = mode.program_rom().into();
-
-        self.cpu_vram[program_rom..(program_rom + program.len())].copy_from_slice(&program[..]);
+    pub fn load(&mut self, program: Vec<u8>, addr: usize) {
+        self.cpu_vram[addr..(addr + program.len())].copy_from_slice(&program[..]);
     }
 }
 
 #[cfg(test)]
 mod test {
+    use memory_value::MemoryValue;
+
     use super::*;
 
     #[test]
