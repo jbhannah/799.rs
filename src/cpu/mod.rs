@@ -36,12 +36,16 @@ pub struct CPU {
     stack_pointer: StackPointer,
     status: Status,
     bus: Bus,
-    pub mode: Mode,
+    mode: Mode,
 }
 
 impl CPU {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn with_mode(self, mode: Mode) -> Self {
+        Self { mode, ..self }
     }
 
     /// Load a program into memory, reset the CPU to its initial state, and run

@@ -6,12 +6,12 @@
     clippy::unnecessary_cast
 )]
 
-use cpu::mode::Mode;
+use cpu::mode::Mode::Mos6502;
 
 use crate::cpu::CPU;
 
-pub mod bus;
-pub mod cpu;
+mod bus;
+mod cpu;
 
 fn main() {
     // Snake game from Easy6502 (https://skilldrick.github.io/easy6502/#snake)
@@ -39,8 +39,6 @@ fn main() {
         0x60, 0xa2, 0x00, 0xea, 0xea, 0xca, 0xd0, 0xfb, 0x60,
     ];
 
-    let mut cpu = CPU::new();
-
-    cpu.mode = Mode::Mos6502;
+    let mut cpu = CPU::new().with_mode(Mos6502);
     cpu.load_and_run(game_code);
 }
