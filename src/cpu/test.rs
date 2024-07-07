@@ -1,5 +1,4 @@
 use opcode::OpCode;
-use program::Program;
 
 use crate::bus::memory_value::MemoryValue;
 
@@ -9,9 +8,7 @@ use super::*;
 fn test_0x00_brk() {
     let mut cpu = CPU::new();
 
-    let program = Program(vec![OpCode::BrkNoneAddressing]);
-
-    cpu.load(program.into());
+    cpu.load(Rom::new(&vec![OpCode::BrkNoneAddressing.into()]));
     cpu.reset();
 
     let status = cpu.status.bits();
@@ -29,7 +26,7 @@ fn test_0x00_brk() {
 #[test]
 fn test_0xa0_ldy_immediate() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa0, 0x05, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa0, 0x05, 0x00]));
 
     assert_eq!(cpu.index_y, 0x05);
 }
@@ -38,7 +35,7 @@ fn test_0xa0_ldy_immediate() {
 fn test_0xa1_lda_indirect_x() {
     let mut cpu = CPU::new();
 
-    cpu.load(vec![0xa1, 0x20, 0x00]);
+    cpu.load(Rom::new(&vec![0xa1, 0x20, 0x00]));
     cpu.reset();
 
     cpu.index_x = 0x10;
@@ -56,7 +53,7 @@ fn test_0xa1_lda_indirect_x() {
 fn test_0xb1_lda_indirect_y() {
     let mut cpu = CPU::new();
 
-    cpu.load(vec![0xb1, 0x20, 0x00]);
+    cpu.load(Rom::new(&vec![0xb1, 0x20, 0x00]));
     cpu.reset();
 
     cpu.index_y = 0x10;
@@ -73,7 +70,7 @@ fn test_0xb1_lda_indirect_y() {
 #[test]
 fn test_0xa2_ldx_immediate() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa2, 0x05, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa2, 0x05, 0x00]));
 
     assert_eq!(cpu.index_x, 0x05);
 }
@@ -82,7 +79,7 @@ fn test_0xa2_ldx_immediate() {
 fn test_0xa5_lda_zero_page() {
     let mut cpu = CPU::new();
     cpu.bus.write(0x10, 0x55_u8);
-    cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa5, 0x10, 0x00]));
 
     assert_eq!(cpu.accumulator, 0x55);
 }
@@ -90,7 +87,7 @@ fn test_0xa5_lda_zero_page() {
 #[test]
 fn test_0xa9_lda_immediate() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0x05, 0x00]));
 
     assert_eq!(cpu.accumulator, 0x05);
     assert!(!cpu.status.contains(Status::Negative));
@@ -100,7 +97,7 @@ fn test_0xa9_lda_immediate() {
 #[test]
 fn test_0xa9_lda_negative_flag() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x80, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0x80, 0x00]));
 
     assert_eq!(cpu.accumulator, 0x80);
     assert!(cpu.status.contains(Status::Negative));
@@ -110,7 +107,7 @@ fn test_0xa9_lda_negative_flag() {
 #[test]
 fn test_0xa9_lda_zero_flag() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0x00, 0x00]));
 
     assert_eq!(cpu.accumulator, 0x00);
     assert!(!cpu.status.contains(Status::Negative));
@@ -120,7 +117,7 @@ fn test_0xa9_lda_zero_flag() {
 #[test]
 fn test_0xaa_tax() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x0a, 0xaa, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0x0a, 0xaa, 0x00]));
 
     assert_eq!(cpu.index_x, 0x0a);
 }
@@ -128,7 +125,7 @@ fn test_0xaa_tax() {
 #[test]
 fn test_0xa8_tay() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0x0a, 0xa8, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0x0a, 0xa8, 0x00]));
 
     assert_eq!(cpu.index_y, 0x0a);
 }
@@ -137,7 +134,7 @@ fn test_0xa8_tay() {
 fn test_0xe6_inc_zero_page() {
     let mut cpu = CPU::new();
     cpu.bus.write(0x10, 0x55_u8);
-    cpu.load_and_run(vec![0xe6, 0x10, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xe6, 0x10, 0x00]));
 
     assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x10), 0x56);
 }
@@ -145,7 +142,7 @@ fn test_0xe6_inc_zero_page() {
 #[test]
 fn test_0xe8_inx_overflow() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0xe8, 0xe8, 0x00]);
+    cpu.load(Rom::new(&vec![0xe8, 0xe8, 0x00]));
     cpu.reset();
     cpu.index_x = 0xff;
     cpu.run();
@@ -156,7 +153,7 @@ fn test_0xe8_inx_overflow() {
 #[test]
 fn test_0xe8_iny_overflow() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0xc8, 0xc8, 0x00]);
+    cpu.load(Rom::new(&vec![0xc8, 0xc8, 0x00]));
     cpu.reset();
     cpu.index_y = 0xff;
     cpu.run();
@@ -168,7 +165,7 @@ fn test_0xe8_iny_overflow() {
 fn test_0x18_clc() {
     let mut cpu = CPU::new();
     cpu.status |= Status::Carry;
-    cpu.load_and_run(vec![0x18, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0x18, 0x00]));
 
     assert!(!cpu.status.contains(Status::Carry));
 }
@@ -177,7 +174,7 @@ fn test_0x18_clc() {
 fn test_0xd8_cld() {
     let mut cpu = CPU::new();
     cpu.status |= Status::Decimal;
-    cpu.load_and_run(vec![0xd8, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xd8, 0x00]));
 
     assert!(!cpu.status.contains(Status::Decimal));
 }
@@ -186,7 +183,7 @@ fn test_0xd8_cld() {
 fn test_0x58_cli() {
     let mut cpu = CPU::new();
     cpu.status |= Status::InterruptDisable;
-    cpu.load_and_run(vec![0x58, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0x58, 0x00]));
 
     assert!(!cpu.status.contains(Status::InterruptDisable));
 }
@@ -195,7 +192,7 @@ fn test_0x58_cli() {
 fn test_0xb8_clv() {
     let mut cpu = CPU::new();
     cpu.status |= Status::Overflow;
-    cpu.load_and_run(vec![0xb8, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xb8, 0x00]));
 
     assert!(!cpu.status.contains(Status::Overflow));
 }
@@ -204,7 +201,7 @@ fn test_0xb8_clv() {
 fn test_0x38_sec() {
     let mut cpu = CPU::new();
     cpu.status &= Status::Carry.not();
-    cpu.load_and_run(vec![0x38, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0x38, 0x00]));
 
     assert!(cpu.status.contains(Status::Carry));
 }
@@ -213,7 +210,7 @@ fn test_0x38_sec() {
 fn test_0xf8_sed() {
     let mut cpu = CPU::new();
     cpu.status &= Status::Decimal.not();
-    cpu.load_and_run(vec![0xf8, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xf8, 0x00]));
 
     assert!(cpu.status.contains(Status::Decimal));
 }
@@ -222,7 +219,7 @@ fn test_0xf8_sed() {
 fn test_0x78_sei() {
     let mut cpu = CPU::new();
     cpu.status &= Status::InterruptDisable.not();
-    cpu.load_and_run(vec![0x78, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0x78, 0x00]));
 
     assert!(cpu.status.contains(Status::InterruptDisable));
 }
@@ -230,11 +227,11 @@ fn test_0x78_sei() {
 #[test]
 fn test_0x85_sta() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
+    cpu.load_and_run(Rom::new(&vec![
         0xa9, 0x42, // load 0x42 into the accumulator
         0x85, 0x00, // store the accumulator into $0000
         0x00,
-    ]);
+    ]));
 
     assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42)
 }
@@ -242,12 +239,12 @@ fn test_0x85_sta() {
 #[test]
 fn test_0x86_stx() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
+    cpu.load_and_run(Rom::new(&vec![
         0xa9, 0x42, // load 0x42 into the accumulator
         0xaa, // transfer the accumulator into X register
         0x86, 0x00, // store X register into $0000
         0x00,
-    ]);
+    ]));
 
     assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
 }
@@ -255,12 +252,12 @@ fn test_0x86_stx() {
 #[test]
 fn test_0x84_sty() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
+    cpu.load_and_run(Rom::new(&vec![
         0xa9, 0x42, // load 0x42 into the accumulator
         0xa8, // transfer the accumulator into Y register
         0x84, 0x00, // store Y register into $0000
         0x00,
-    ]);
+    ]));
 
     assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0x42);
 }
@@ -268,12 +265,12 @@ fn test_0x84_sty() {
 #[test]
 fn test_0x0a_asl() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
+    cpu.load_and_run(Rom::new(&vec![
         0xa9,
         0b0101_0101, // load 0b0101_0101 into the accumulator
         0x0a,        // accumulator bit shift left
         0x00,
-    ]);
+    ]));
 
     assert!(!cpu.status.contains(Status::Carry));
     assert_eq!(cpu.accumulator, 0b1010_1010);
@@ -282,12 +279,12 @@ fn test_0x0a_asl() {
 #[test]
 fn test_0x0a_asl_carry() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
+    cpu.load_and_run(Rom::new(&vec![
         0xa9,
         0b1010_1010, // load 0b1010_1010 into the accumulator
         0x0a,        // accumulator bit shift left
         0x00,
-    ]);
+    ]));
 
     assert!(cpu.status.contains(Status::Carry));
     assert_eq!(cpu.accumulator, 0b0101_0100);
@@ -296,7 +293,7 @@ fn test_0x0a_asl_carry() {
 #[test]
 fn test_0x06_asl() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
+    cpu.load_and_run(Rom::new(&vec![
         0xa9,
         0b0101_0101, // load 0b0101_0101 into the accumulator
         0x85,
@@ -304,7 +301,7 @@ fn test_0x06_asl() {
         0x06,
         0x00, // $0000 bit shift left
         0x00,
-    ]);
+    ]));
 
     assert!(!cpu.status.contains(Status::Carry));
     assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x00), 0b1010_1010);
@@ -314,7 +311,7 @@ fn test_0x06_asl() {
 fn test_0xc6_dec_absolute() {
     let mut cpu = CPU::new();
     cpu.bus.write(0x0110, 0x42_u8);
-    cpu.load_and_run(vec![0xce, 0x10, 0x01, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xce, 0x10, 0x01, 0x00]));
 
     assert_eq!(MemoryValue::<u8>::read(&cpu.bus, 0x0110), 0x41);
 }
@@ -322,7 +319,7 @@ fn test_0xc6_dec_absolute() {
 #[test]
 fn test_0xca_dex() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0xca, 0x00]);
+    cpu.load(Rom::new(&vec![0xca, 0x00]));
     cpu.reset();
     cpu.index_x = 0x42;
     cpu.run();
@@ -333,7 +330,7 @@ fn test_0xca_dex() {
 #[test]
 fn test_0x88_dey() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x88, 0x00]);
+    cpu.load(Rom::new(&vec![0x88, 0x00]));
     cpu.reset();
     cpu.index_y = 0x42;
     cpu.run();
@@ -344,7 +341,7 @@ fn test_0x88_dey() {
 #[test]
 fn test_0x2a_rol_accumulator() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0b1010_1010, 0x2a, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0b1010_1010, 0x2a, 0x00]));
 
     assert_eq!(cpu.accumulator, 0b0101_0100);
     assert!(cpu.status.contains(Status::Carry));
@@ -353,7 +350,7 @@ fn test_0x2a_rol_accumulator() {
 #[test]
 fn test_0x6a_ror_accumulator() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0xa9, 0b0101_0101, 0x6a, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0xa9, 0b0101_0101, 0x6a, 0x00]));
 
     assert_eq!(cpu.accumulator, 0b0010_1010);
     assert!(cpu.status.contains(Status::Carry));
@@ -368,7 +365,7 @@ fn test_0x6c_jmp_indirect() {
     cpu.bus.write(addr, 0x42a9_u16); // load 0x42 into the accumulator (0xa9, 0x42 stored little-endian)
     cpu.bus.write(addr + 2, 0x00_u8);
 
-    cpu.load_and_run(vec![0x6c, 0x20, 0x01, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0x6c, 0x20, 0x01, 0x00]));
 
     assert_eq!(cpu.accumulator, 0x42);
 }
@@ -376,7 +373,7 @@ fn test_0x6c_jmp_indirect() {
 #[test]
 fn test_0x4a_lsr_accumulator() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x4a, 0x00]);
+    cpu.load(Rom::new(&vec![0x4a, 0x00]));
     cpu.reset();
 
     cpu.accumulator = 0b0101_0101;
@@ -390,7 +387,7 @@ fn test_0x4a_lsr_accumulator() {
 #[test]
 fn test_0x48_pha() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x48, 0x00]);
+    cpu.load(Rom::new(&vec![0x48, 0x00]));
     cpu.reset();
 
     cpu.accumulator = 0x42;
@@ -406,7 +403,7 @@ fn test_0x48_pha() {
 #[test]
 fn test_0x08_php() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![0x08, 0x00]);
+    cpu.load_and_run(Rom::new(&vec![0x08, 0x00]));
 
     assert_eq!(
         MemoryValue::<u8>::read(&cpu.bus, StackPointer::default().into()),
@@ -417,7 +414,7 @@ fn test_0x08_php() {
 #[test]
 fn test_0x68_pla() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x68, 0x00]);
+    cpu.load(Rom::new(&vec![0x68, 0x00]));
     cpu.reset();
 
     let val = 0x42_u8;
@@ -432,7 +429,7 @@ fn test_0x68_pla() {
 #[test]
 fn test_0x28_plp() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x28, 0x00]);
+    cpu.load(Rom::new(&vec![0x28, 0x00]));
     cpu.reset();
 
     let val = 0xff_u8;
@@ -447,7 +444,7 @@ fn test_0x28_plp() {
 #[test]
 fn test_0x40_rti() {
     let mut cpu = CPU::new();
-    cpu.load(vec![0x40, 0x00]);
+    cpu.load(Rom::new(&vec![0x40, 0x00]));
     cpu.reset();
 
     let pc = 0x00a0_u16;

@@ -1,8 +1,11 @@
 use std::{fmt::LowerHex, ops::Shr};
 
-use crate::bus::{
-    memory_value::{BitSize, MemoryValue},
-    Bus,
+use crate::{
+    bus::{
+        memory_value::{BitSize, MemoryValue},
+        Bus,
+    },
+    rom::Rom,
 };
 use stack_pointer::StackPointer;
 
@@ -16,7 +19,6 @@ mod instructions;
 pub mod mode;
 pub mod opcode;
 mod opcode_mapping;
-mod program;
 mod stack_pointer;
 mod status;
 
@@ -50,15 +52,15 @@ impl CPU {
 
     /// Load a program into memory, reset the CPU to its initial state, and run
     /// the program.
-    pub fn load_and_run(&mut self, program: Vec<u8>) {
-        self.load(program);
+    pub fn load_and_run(&mut self, rom: Rom) {
+        self.load(rom);
         self.reset();
         self.run();
     }
 
     /// Load a program into memory.
-    pub fn load(&mut self, program: Vec<u8>) {
-        self.bus.load(program, self.mode.program_rom().into());
+    pub fn load(&mut self, rom: Rom) {
+        self.bus.load(rom.prg_rom, self.mode.program_rom().into());
     }
 
     /// Set the program counter to the value at the designated reset address in
